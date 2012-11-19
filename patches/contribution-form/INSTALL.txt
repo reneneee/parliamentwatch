@@ -1,0 +1,252 @@
+1 - Download drupal 7.x from:http://drupal.org/project/drupal
+2 - Install drupal on your localhost using standard option
+3 - Download CIVICRM (4.1 or above, as this work is tested on
+    4.1 so it will naturally provide best results) version
+    from: http://sourceforge.net/projects/civicrm/files/civicrm-stable/4.1.0/
+	Select (civicrm-4.1.0-drupal.tar.gz) for drpal7.
+4 - Extract and place the downloaded CIVICRM package in modules directory of drupal. ie: /sites/all/modules/CIVICRM_PACKAGE_HERE
+
+5. Run the Installer for civicrm
+	The installer will verify that you've downloaded the correct version of CiviCRM, and will check your server environment to make sure it meets CiviCRM requirements. It will then create and populate a database for CiviCRM as well as create your CiviCRM settings file (civicrm.settings.php).
+
+	a- Login to your Drupal site with Administrator level permissions.
+	b- Point your web browser to the following URL:
+		http://<your_drupal_home>/sites/all/modules/civicrm/install/index.php
+	
+6 - Create database for civicrm in phpmyadmin
+7 - Fill the form for civicrm and drupal by providing there database names.
+8 - Click the button (Check Reqirements) if error occured recheck your provided values and click again
+9 - After green signal with message(Yor're ready to install) click on (Check Requirement and Install CiviCRM) button
+	
+10 - From left navigation menu click on CiviCRM or visit the link: (http://DRUPAL-WEB-ROOT/civicrm/dashboard)
+	 NOTE: If the following warnings come on screen just navigate to: Configration->Development->Logging and errors
+		   and select none for (Error and warnings).
+	 a - Provide (Organization Name)
+	 b - Provide (From Email Address)
+	 c - Provide (Default CiviMail Mailbox)
+	 
+11 - Enable (Payment Processor)	under the (Administer->System Settings->Payment Processor) menu and Click on (Add Payment Processor).
+	Fill the form as bellow:
+	a - Payment Processor Type: Paypal - Website Payments Pro
+	b - Name: Paypal WPP
+	c - Description: This is paypal test payment processor	
+	And fill the Test payment form as bellow:
+	a - User Name: Test
+	a - Password: Test
+	a - Signature: Test
+	leave other options as it is.
+
+12 - Set Language and Currency by going to: Administer->Localization->Language,Curency,Locations.
+	set form values as bellow:
+	a - Default Language: English (United State)
+	b - Default Currency: EUR (€)
+	c - Available Currencies: EUR (€)
+	d - Default Country: Germany
+	e - Available Countries: Germany
+	f - Available Countries: Germany
+	leave other options as it is.
+
+	 
+	 
+13 - Select (New Contribution Page) from (Contribution) menu of civicrm.
+	 Contribution -> New Contribution Page
+14 - Fill the form as bellow:
+	 Title: Contribution
+	 Contribution Type: Donation
+	 Leave other options as default and click (Continue)
+	 click on (Save and Next)
+
+15 - On the contribution amount page fill the form as bellow:
+	a - Currency: EUR (€)
+	b - Payment Processor: Paypal WPP
+	c - Pledges: select the checkbox
+		I  - Select Month 
+		II - Select Year
+	d - Allow other amounts: Select the checkbox
+	e - Minimum Amount: €5
+	f - Maximum Amount: €5000
+	g - Fixed Contribution Options: fill 3 amount textfields without labels as : €5,€10,€20 and make €10 default.
+	h - click on (Save and Next)
+
+16 - On Membership Tab click on (Save and Next).
+17 - Skip the (Thank-you and Receipting) and (Tell a Friend) Tabs. instead direct click on (Profiles) to continue.as we will create the     thankyou webforms in comming steps.
+
+18 - On (Profiles) tab click on (Click here for new profile) link and create a new profile as bellow.
+	a - Profile Name: Personal Information
+	b - Order: 1
+	c - Is this CiviCRM Profile active?: Yes
+	d - Click on (Save). You can add fields to this profile now.
+19 - Add the following fields to above newly created profile.
+	FIELD 1
+	--------
+	a - Field Name: Individual - Individual Prefix
+	b - Visibility: Puplic pages and Listings
+	c - Field Label: Prefix
+	d - Active: Yes
+	e - order: 1
+	Click on (save and new)
+	FIELD 2
+	--------
+	a - Field Name: Individual - First Name
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: First Name
+	e - order: 2
+	f - Active: Yes
+	Click on (save and new)
+	FIELD 3
+	--------
+	a - Field Name: Individual - Last Name
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: Family Name
+	e - Active: Yes
+	Click on (save and new)
+	FIELD 4
+	--------
+	a - Field Name: Contacts - Street Address - Home
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: Street and housenumber - Primary
+	e - order: 4
+	f - Active: Yes
+	Click on (save and new)
+	FIELD 5
+	--------
+	a - Field Name: Contacts - Address Custom
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: Addressee Custom
+	e - order: 5
+	f - Active: Yes
+	Click on (save and new)
+	FIELD 6
+	--------
+	a - Field Name: Contacts - City - Primary
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: City
+	e - order: 7
+	f - Active: Yes
+	Click on (save and new)
+	FIELD 7
+	--------
+	a - Field Name: Contacts - Phone - Primary
+	b - Required? Yes
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: Telephone (optional)
+	e - order: 8
+	f - Active: Yes
+	Click on (save and new)
+
+	To add(States) click on: Administer->Customize data and screens->Custom Field
+	Click on link saying (add one) and fill the form as bellow:
+		a - Set Name: German States
+		b - Used For: Individual
+		c - Order: 1
+		d - Dispaly Style: Inline
+		After clicking on save on save you will redirected to form to provide state values, fill as bellow.
+		a - Field Label: German States	
+		b - Data and Input Field Type: Alphanumeric - Select
+		c - Database field length: 255
+		d - Provide Label and value in bellow format.
+			Label ---- Value
+			Select---- 0
+			State1---- State1
+			State2---- State2
+			State3---- State3
+				.							
+				.
+		e - Active?: Yes
+	and click (Save)
+	 
+	
+
+	FIELD 8
+	--------
+	a - Field Name: Individual - German Council
+	b - Required? No
+	c - Visibility: Puplic pages and Listings
+	d - Field Label: Councils
+	e - order: 9
+	f - Active: Yes
+	Click on (save and new)
+
+	
+20 - To include newly created profile click on (Contributions) -> (Manage Contribution Pages)
+	a - Click on (Configure) -> (Include Profiles)
+	b - Select (Personal Information) from profiles and click (Save and Done) for (top of page)
+
+21 - To add profile to the bottom of the page first create a newsletter group, by navigating to: (Contacts)->(New Group)
+	fill the for as bellow:
+	a - Name: Subscribers to the newsletter
+	b - Description: The users of this group will be subscribed for newsletters.
+	c - Visibility: Public Pages
+	Click continue.
+22 - Create custom fields for newsletter profile by clicking: (Administer->Customize data and screens->Custom Field)
+	Click on (Add set of custom fields) and fill the form as bellow.
+	a - Set Name: Subscribers
+	b - Used For: Contribution - Donation
+	c - keep other settings as it is and click (save)
+	after creating a set you can add fields to it 
+
+23 - Adding field to (Subscribers) set
+	Field 1
+	--------
+	a - Field Label: name and donation to be mentioned
+	b - Data and Input Field Type: Alphanumeric - Checkbox
+	c - Label: Yes, I would like my name and donation to be mentioned on abgeordnetenwatch.de
+	d - Value: Yes, I would like my name and donation to be mentioned on abgeordnetenwatch.de
+	leave other options as it is and click (Save and New)
+
+	Field 2
+	--------
+	a - Field Label: Subscribe to newsletter
+	b - Data and Input Field Type: Alphanumeric - Checkbox
+	c - Label: Subscribe to newsletter
+	d - Value: Subscribe to newsletter
+	leave other options as it is and click (Save)
+
+24 - Click on (Contributions)->(Manage Contribution Pages)
+	a - Click on (Configure)-> (Include Profile)
+	b - Click on link saying (click here for new profile)
+	fill the form as bellow: 
+	Field 1
+	--------
+	a - Field Name: Contributions - name and donation to be mentioned :: subscribers
+	b - Field Label: name and donation to be mentioned
+	c - Visibility: Public Pages and Listings
+	Leave other options as it is and click (Save and new)
+
+	Field 2
+	--------
+	a - Field Name: Contributions - Subscibe to newsletter :: subscribers
+	b - Field Label: Subscribe to newsletter
+	c - Visibility: Public Pages and Listings
+	Leave other options as it is and click (Save)
+
+	
+25 - To apply custom template on civicrm donation form follow the steps bellow to accoplish the desired result:
+	a - place the folder(customtpl) on root of the site. 
+		ex: WEB_ROOT/customtpl/
+	            E:/xampp/htdocs/DRUPAL7/customtpl/
+	b - Navigate to: Administer->System Settings->Directories
+	c - update the (Custom Templates) field value to:
+		ex: WEB_ROOT/customtpl/
+	          :/xampp/htdocs/DRUPAL7/customtpl/	
+
+26 - INSTALL the following custom modules, after placing in sites/all/modules/custom folder.
+	a - civicrm_setting
+	b - manage_councils
+	c - goto_thankyou
+
+27 - Delete All cache by navigating to: Administer->System Settings->Cleanup Caches and Update Paths
+	a - click on button (cleanup caches)
+
+28 - Visit the page by visiting: Contributions->Manage Contribution Pages->Links->Test-drive
+.
+
+
+
+
+	

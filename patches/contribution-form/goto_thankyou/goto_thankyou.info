@@ -1,0 +1,10 @@
+name = Goto Thankyou
+description = Redirects users to the THANK YOU page after successful contribution.
+package = Custom
+version = VERSION
+core = 7.x
+; Information added by 4Acetech packaging script on 2011-12-05
+version = "7.x-1.x-dev"
+project = "drupal"
+
+

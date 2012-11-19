@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Configuration interface to provide a quick and easy way of replacing text.
+ */
+
+/**
+ * Implements hook_menu.
+ */
+function civicrm_setting_menu() {
+    $items['german_councils'] = array(
+        'type' => MENU_CALLBACK,
+        'access callback' => TRUE,
+        'page callback' => 'get_german_councils',
+    );
+
+    return $items;
+}
+
+/**
+ * Implements hook_form_alter.
+ */
+function civicrm_setting_form_alter(&$form, &$form_state, $form_id) {
+    $get = isset($_GET["_qf_Confirm_display"]) ? $_GET["_qf_Confirm_display"] : '';
+    if (arg(0) == 'civicrm' && arg(1) == 'contribute' && arg(2) == 'transact' && $get != true) {
+        global $base_url;
+        $path = drupal_get_path('module', 'civicrm_setting');
+        drupal_add_css($path . '/css/civicrm_setting.css');
+        drupal_add_js($base_url . '/misc/jquery.cookie.js');
+        drupal_add_js($path . '/js/civicrm_setting.js');
+        drupal_add_js($path . '/js/main.js');
+    }
+}
+
+/**
+ * 
+ * @function : get_german_councils
+ * @param $state_id : Get the german state id
+ * @param $councilName : Get the german council name
+ * @return: list of german councils based on $council name
+ */
+function get_german_councils() {
+    $state_id = $_POST['state_id'];
+    $councilName = $_POST['cid'];
+    db_set_active(CIVICRM_DB);
+    $option_group_id = db_query("SELECT id FROM civicrm_option_group WHERE title = 'German Council'")->fetchField();
+    $councils = db_select("civicrm_option_value", 'c')
+            ->fields('c', array('id', 'name', 'label'))
+            ->condition('option_group_id', $option_group_id)
+            ->condition('name', $state_id)
+            ->execute();
+    $output = '<select name="' . $councilName . '" id="' . $councilName . '" class="form-select">
+	<option value="">- select -</option>';
+    while ($row = $councils->fetchAssoc()) {
+        $output .= '<option value="' . $row['id'] . '">' . $row['label'] . '</option>';
+    }
+    $output .='</select>';
+    db_set_active();
+    echo $output;
+}
+
+?>

@@ -1,0 +1,11 @@
+name = civicrm custom settings
+description = Customise civicrm to meet the requirements
+core = 7.x
+package = Custom
+files[] = civicrm_setting.module
+
+; Information added by drupal.org packaging script on 2011-05-03
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "CiviCRM"
+datestamp = "1304446316"
