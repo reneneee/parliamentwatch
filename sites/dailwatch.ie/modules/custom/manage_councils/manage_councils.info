@@ -1,0 +1,12 @@
+name = Councils Management
+description = Provide Councils Management Form.
+package = Custom
+core = 7.x
+version = 7.x-1.x-dev
+dependencies[] = civicrm
+files[] = manage_councils.module
+files[] = manage_councils.functions.inc
+
+
+
+

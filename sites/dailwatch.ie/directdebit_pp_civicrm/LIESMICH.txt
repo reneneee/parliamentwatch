@@ -1,0 +1,35 @@
+Der Direct Debit Payment Processor erweitert CiviCRM 3.3.x um das 
+elektronische Lastschriftverfahrenn (http://de.wikipedia.org/wiki/Lastschrift).
+
+## Voraussetzungen
+
+* CiviCRM 3.3.x (3.3.3 oder höher)
+* Drupal 6.x
+* Drupal Modul "direct_debit" (http://crmproject.de/node/22)
+
+## Installation:
+
+1. Entpacken Sie directdebit_pp_civicrm...tgz (von http://crmproject.de/node/22) 
+   im Drupal site-Verzeichnis. Standardmäßig ist das sites/default/.
+2. Wechseln Sie auf einer Shell in das Verzeichnis directdebit_pp_civicrm und starten Sie 
+   "sh install.sh".
+3. Fügen Sie den Payment Processor "Drupal Direct Debit" unter der Drupal Admin-Adresse 
+   civicrm/admin/paymentProcessor&reset=1 hinzu.
+   Hinweis: Sie müssen etwas in den Feldern Username und URL eintragen. Die Werte  
+   werden jedoch nicht verwendet, da dieser Payment Processor keine Netzwerkfunktionen
+   nutzt.
+
+## Copyright
+
+Webkonzepte und Programmierung Bernhard Fürst und
+Lars Schröter <lars.schroeter@fuerstnet.de>
+http://fuerstnet.de
+
+## Lizenz
+
+Das vorliegende Programmsystem unterliegt der GNU GENERAL PUBLIC LICENSE Version 2, June 1991. 
+Siehe beigelegte Datei LICENSE.txt.
+
+## Weitere Informationen
+
+http://crmproject.de/node/19

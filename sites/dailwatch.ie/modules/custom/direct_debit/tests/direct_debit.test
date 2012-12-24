@@ -1,0 +1,156 @@
+<?php
+
+class DirectDebitTestCase extends DrupalWebTestCase {
+  /**
+   * Implementation of getInfo().
+   */
+  function getInfo() {
+    return array(
+      // 'name' should start with what is being tested (menu item) followed by what
+      // about it is being tested (creation/deletion).
+      'name' => t('direct debit receive data'),
+      // 'description' should be one or more complete sentences
+      // explaining the test.
+      'description' => t('Test receiving data, storing it in database.'),
+      // 'group' should be a logical grouping of test cases, like a category.
+      // Suggestion: Use the name of the module to be tested.
+      'group' => t('Direct Debit'),
+    );
+  }
+  
+  /**
+   * One-sentence description of test.
+   */
+  function directdebitStoreData() {
+    // Code that does something to be tested.
+
+    // Test that the code did what it was supposed to do.
+    $this->assertEqual($some_value, $another_value, t('Testing equality of some value and another value'));
+  }
+
+  /**
+   * setup Test - runs before every test method
+   */
+  function setUp() {
+    // enable and install the current module
+    parent::setUp('direct_debit');
+    
+    // insert bank_identification_number for validation:
+    db_query("INSERT INTO {direct_debit_bank_identification_numbers} (bank_identification_number, bank_name) VALUES (12030000, 'Deutsche Kreditbank Berlin')"); 
+    // Do other stuff here...
+  }
+  
+  /**
+   * tear down
+   * 
+   * used only when the test needs to clean up after itself
+   *
+   * @return void
+   * @author Lars
+   */
+  function tearDown() {
+    // Do tear down tasks...
+
+    // Finally...
+    parent::tearDown();
+  }
+  
+  
+  /**
+   * Helper function to create an array with valid data
+   *
+   * @return void
+   * @author Lars
+   */
+  function createValidData() {
+    return array(
+      'form_id' => md5(uniqid(rand(), TRUE)), //'4f9026ec805755bfcd5f0d07a7ab50cc',
+      'email' => 'ositoblanco@gmail.com',
+      'account_holder' => 'Holder Holding',
+      'first_name' => 'Testname',
+      'last_name' => 'Testnachname',
+      'bank_account_number' => '123456789',
+      'bank_identification_number' => '12030000',
+      'bank_name' => 'Deutsche Kreditbank Berlin',
+      'ip_address' => '127.0.0.1',
+      'amount' => '22',
+      'currency_id' => 'CAD',
+      'payment_action' => 'Sale',
+      'invoice_id' => 'fa748c84786175509054a0a9896ce2b6',
+      'contribution_description' => 'Simple Test Contriution',
+      'street' => 'Teststraße',
+      'city' => 'TestStadt',
+      'state_province' => 'SN',
+      'postal_code' => '1234',
+      'country' => 'DE',
+      'contribution_type' => 'Donation',
+      'contribution_page_id' => '4',
+      'organization_name' => 'Muster.org'
+    );
+  }
+  
+  /**
+   * test direct_debit_pp_do_payment with valid data
+   *
+   * @return void
+   * @author Lars
+   */
+  function test_pp_do_payment_valid_data() {
+    $input_data = $this->createValidData();
+    
+    $result = direct_debit_pp_do_payment($input_data, 'live');
+    
+    $this->assertTrue($result && !isset($result['error']), t('do payment with valid data'));
+  }
+  
+  /**
+   * two times direct_debit_pp_do_payment with the same valid data
+   *
+   * @return void
+   * @author Lars
+   */
+  function test_pp_do_payment_valid_data_twice() {
+    $input_data = $this->createValidData();
+    
+    // first time
+    direct_debit_pp_do_payment($input_data, 'live');    
+    
+    // second time
+    $result = direct_debit_pp_do_payment($input_data, 'live');
+    
+    $this->assertTrue(isset($result['error']['hash']['code']) && $result['error']['hash']['code'] == 'data exists', t('Don\'t do the same payment twice'));
+  }
+  
+  /**
+   * direct_debit_pp_do_payment with the invalid data
+   *
+   * @return void
+   * @author Lars
+   */
+  function test_pp_do_payment_invalid_data() {
+    
+    // email
+    $input_data = $this->createValidData();
+    $input_data['email'] = 'invalid';
+    $result = direct_debit_pp_do_payment($input_data);
+    $this->assertTrue(isset($result['error']) && $result['error']['email']['code'] == 'invalid data', t('Test Invalid Data: email'));
+    
+    // bank_account_number
+    $input_data = $this->createValidData();
+    $input_data['bank_account_number'] = 'invalid';
+    $result = direct_debit_pp_do_payment($input_data);    
+    $this->assertTrue(isset($result['error']) && $result['error']['bank_account_number']['code'] == 'invalid data', t('Test Invalid Data: bank_account_number'));
+
+    // bank_identification_number
+    $input_data = $this->createValidData();
+    $input_data['bank_identification_number'] = 'invalid';
+    $result = direct_debit_pp_do_payment($input_data);
+    $this->assertTrue(isset($result['error']) && $result['error']['bank_identification_number']['code'] == 'invalid data', t('Test Invalid Data: bank_identification_number'));
+    
+    // bank_name
+    $input_data = $this->createValidData();
+    $input_data['bank_name'] = 'invalid';
+    $result = direct_debit_pp_do_payment($input_data);
+    $this->assertTrue(isset($result['error']) && $result['error']['bank_name']['code'] == 'invalid data', t('Test Invalid Data: bank_name'));
+  }  
+}

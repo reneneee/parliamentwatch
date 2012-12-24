@@ -1,0 +1,1 @@
+Drupal.locale = { 'strings': {"":{"Sunday":"D\u00e9 Domhnaigh","Monday":"D\u00e9 Luain","Tuesday":"D\u00e9 M\u00e1irt","Wednesday":"D\u00e9 C\u00e9adaoin","Thursday":"D\u00e9ardaoin","Friday":"D\u00e9 hAoine","Saturday":"D\u00e9 Sathairn"}} };

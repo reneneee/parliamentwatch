@@ -1,0 +1,6 @@
+; $Id$
+name = Direct Debit Offline Gateway
+description = Provides gateway functionality for the CiviCRM Direct Debit payment processor.0x20See http://fuerstnet.de/direct_debit for more information.
+version = 7.x-0.x-dev
+package = Custom
+core = 7.x

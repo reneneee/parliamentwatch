@@ -1,0 +1,2632 @@
+<?php
+
+// $Id$
+/**
+ * @file
+ * Payment Processor to manage direct debit transactions. Attention: This payment processor stores confidential data like the bank accounts information in your drupal database.
+ *
+ */
+/**
+ * useful Documentation:
+ * 
+ *     // todo: call direct_debit_pp_update_civicrm_status for 5 in create DTA
+ * 
+ * 
+ * we could mask the account numbers after setting transaction to complete / canceled / failed
+ * 12324567890 = ******7890 ... like it's done by credit card
+ * optional we could offer a settings option for this
+ * 
+ * */
+
+/**
+ * Valid permissions for the direct_debit module
+ *
+ * @return array An array of valid permissions for the onthisdate module
+ */
+function direct_debit_perm() {
+    return array('administer direct debit', 'access direct debit');
+}
+
+/**
+ * call hook_menu
+ *
+ * @return array, An array of menu items
+ */
+function direct_debit_menu() {
+
+    $items = array();
+
+    $items['direct_debit'] = array(
+        'title' => 'Direct Debit Management',
+        'description' => 'Direct Debit Management',
+        'page callback' => 'direct_debit_admin',
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['direct_debit/dta'] = array(
+        'title' => 'DTA Files Archiv',
+        'description' => 'Direct Debit Management - DTA Files Archiv',
+        'page callback' => 'direct_debit_dta_overview',
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['direct_debit/dta/%'] = array(
+        'title' => 'DTA Files Archiv',
+        'description' => 'DTA Files Archiv',
+        'page callback' => 'direct_debit_dta_overview',
+        'page arguments' => array(2),
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_CALLBACK,
+    );
+    $items['direct_debit/dta/%/download'] = array(
+        'title' => 'DTA Files Archiv',
+        'description' => 'Direct Debit Management - DTA Files Archiv',
+        'page callback' => 'direct_debit_dta_download_create',
+        'page arguments' => array(2),
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_CALLBACK,
+    );
+    $items['direct_debit/details/%'] = array(
+        'title' => 'Direct Debit Details',
+        'page callback' => 'direct_debit_admin_details',
+        'page arguments' => array(2),
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_CALLBACK,
+    );
+    $items['direct_debit/receipt/%'] = array(
+        'title' => 'Direct Debit Receipt',
+        'page callback' => 'direct_debit_admin_receipt',
+        'page arguments' => array(2),
+        'access arguments' => array('access direct debit'),
+        'type' => MENU_CALLBACK,
+    );
+    $items['direct_debit/preview/mail'] = array(
+        'title' => 'Direct Debit Mail Preview',
+        'page callback' => 'direct_debit_admin_preview_mail',
+        'page arguments' => array(2),
+        'access arguments' => array('administer direct debit'),
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['admin/settings/direct_debit'] = array(
+        'title' => 'Direct Debit',
+        'description' => 'Configure Direct Debit',
+        'page callback' => 'direct_debit_admin_settings',
+        'access arguments' => array('administer direct debit'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+
+    return $items;
+}
+
+/**
+ * call hook theme 
+ * 
+ * Register the theme implementations.
+ *
+ * @return void
+ */
+function direct_debit_theme() {
+    return array(
+        'direct_debit_admin_overview' => array(
+            'arguments' => array('form' => NULL),
+        ),
+        'direct_debit_admin_overview_table' => array(
+            'arguments' => array('form' => NULL),
+        ),
+        'direct_debit_admin_filters' => array(
+            'arguments' => array('form' => NULL),
+        ),
+        'direct_debit_admin_details' => array(
+            'arguments' => array('vars' => NULL),
+        ),
+        'direct_debit_dta_overview' => array(
+            'arguments' => array('vars' => NULL),
+        ),
+        'direct_debit_block_content' => array(
+            'arguments' => array('vars' => NULL),
+        ),
+        'direct_debit_admin_receipt' => array(
+            'template' => 'direct_debit_admin_receipt',
+            'arguments' => array('vars' => NULL),
+        ),
+        'direct_debit_admin_mail' => array(
+            'template' => 'direct_debit_admin_mail',
+            'arguments' => array('vars' => NULL),
+        ),
+            // 'direct_debit_civicrm_settings_php' => array(
+            //   'template' => 'direct_debit_civicrm_settings_php',
+            //   'arguments' => array('vars' => NULL),
+            // ),
+    );
+}
+
+/**
+ * Build the two separated forms.
+ *
+ * @return string, the rendered form output
+ */
+function direct_debit_admin_settings() {
+    $output = drupal_render(drupal_get_form('direct_debit_admin_setings_update_form'));
+
+    $output .= drupal_render(drupal_get_form('direct_debit_admin_settings_form'));
+
+    return $output;
+}
+
+/**
+ * Build the update form.
+ *
+ * @return array form: The update form array.
+ */
+//function direct_debit_admin_setings_update_form() {
+function direct_debit_admin_setings_update_form() {
+    $form = array();
+
+    $form['update'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Update Bank Identification Numbers'),
+            // '#description' => t('')
+    );
+
+    $form['update']['direct_debit_update_bank_identification_numbers_upload'] = array(
+        '#type' => 'file',
+        '#title' => t('Upload <em>PC-Text</em> file containing Bank Identification Numbers'),
+        '#maxlength' => 40,
+        '#description' => t("Upload a file containing Bank Identification Numbers to update the internal database with current valid numbers. This feature is tested with german BIN's only. You get the file containing german BIN's from: !link. Download the <em>PC-Text</em> format there.", array('!link' => l('The German Bundesbank', 'http://www.bundesbank.de/zahlungsverkehr/zahlungsverkehr_bankleitzahlen_download.php'))),
+    );
+
+    $form['update']['direct_debit_update_notification'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Update notification'),
+        '#description' => t('A message will appear in the Direct Debit overview to remind you to update the Bank Identification Numbers.'),
+        '#default_value' => TRUE,
+    );
+
+    $timestamp = time();
+    $now = array('day' => format_date($timestamp, 'custom', 'j'),
+        'month' => format_date($timestamp, 'custom', 'n'),
+        'year' => format_date($timestamp, 'custom', 'Y')
+    );
+
+    $default_date = variable_get('direct_debit_update_expiration', $now);
+    // foreach ($default_date as $key => $value) {
+    //   $default_date[$key] = check_plain($default_date[$key]);
+    // }
+    $form['update']['direct_debit_update_expiration'] = array(
+        '#type' => 'date',
+        '#title' => t('Date of expiration'),
+        '#default_value' => $default_date,
+        '#after_build' => array('direct_debit_update_expiration_set_year_range'),
+    );
+
+    $form['update']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Start update'),
+    );
+
+    $form['#attributes'] = array('enctype' => 'multipart/form-data');
+
+    return $form;
+}
+
+/**
+ * Build the direct debit settings form.
+ *
+ * @return array form: The settings form array.
+ */
+function direct_debit_admin_settings_form($form, &$form_state) {
+    $form = array();
+
+    $form['dta'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('DTA Settings'),
+        '#description' => '<p class="message">' . t('Please note: DTA restricts strings to uppercase alphanumeric characters, spaces and . , & - / + * $ %. When using PEARs Payment_DTA package the input will be transformed automatically to DTA standard.') . '</p>'
+    );
+    if (0 == db_query("SELECT COUNT(*) FROM direct_debit_bank_identification_numbers")->fetchField()) {
+        drupal_set_message(t('You must upload Bank Information Numbers above before being able to configure further settings.'), 'warning', FALSE);
+        $form['dta']['#description'] = '<p><strong>' . t('You must upload Bank Information Numbers above before being able to configure further settings.') . '</strong></p>' . $form['dta']['#description'];
+
+        // do not display the other form values if there are no Bank Identification Numbers in database
+        return $form;
+    }
+
+    $form['dta']['direct_debit_dta_name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Name of Account Holder'),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_name', '')),
+        '#required' => TRUE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t('Name of the account holder, up to 27 uppercase alphanumeric characters, spaces or . , & - / + * $ %.'),
+    );
+
+    $form['dta']['direct_debit_dta_bank_account_number'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Bank Account Number'),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_bank_account_number', '')),
+        '#required' => TRUE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t('The organizations bank account number, up to 10 digits'),
+    );
+
+    $form['dta']['direct_debit_dta_bank_identification_number'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Bank Identification Number'),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_bank_identification_number', '')),
+        '#required' => TRUE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t('Bank identification number of the bank account, up to 8 digits'),
+    );
+
+    $form['dta']['direct_debit_dta_reference_text'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Custom Reference Text'),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_reference_text', '')),
+        '#required' => FALSE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t('Custom reference text which is shown in the accountholders bill, up to 54 uppercase alphanumeric characters, spaces or . , & - / + * $ %.'),
+    );
+
+    $form['dta']['direct_debit_dta_file_path'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Path to DTA.php"),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_file_path', '')),
+        '#required' => FALSE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t("This module uses the PEAR Payment_DTA package. Either your site administrator installs it using the PEAR install command or you are installing it e.g. in your <strong>@path</strong> directory. Download Payment_DTA here: !pear_link. The directory path containing <strong>DTA.php</strong> must be set here. Use a path relative to the Drupal root or enter an absolute file system path. Leave this field blank to use the PHP include_path (<strong>@include_path</strong>).", array('@path' => file_stream_wrapper_get_instance_by_uri('public://')->getDirectoryPath(), '!pear_link' => l('http://pear.php.net/package/Payment_DTA', 'http://pear.php.net/package/Payment_DTA'), '@include_path' => get_include_path())),
+    );
+
+    $default_prefix = t('contributions-') . check_plain(variable_get('site_name', ''));
+
+    $form['dta']['direct_debit_dta_file_prefix'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Set DTA file prefix"),
+        '#default_value' => check_plain(variable_get('direct_debit_dta_file_prefix', $default_prefix)),
+        '#required' => FALSE,
+        // '#element_validate' => array('direct_debit_validate_check_plain'),
+        '#description' => t("Modify the default prefix (<em>@default_prefix</em>). The DTA file name will look like this: <em>@filename</em>. It must only contain alphanumeric characters, underscores (_) or hyphens (-).", array('@default_prefix' => $default_prefix, '@filename' => $default_prefix . '_' . format_date(time(), 'custom', 'Y-m-d') . '.dta')),
+    );
+
+    $form['issuer'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Issuer Address'),
+        '#description' => '<p>' . t('Issuer Address to be included in the Direct Debit receipt and confirmation mail.') . '</p>'
+    );
+    $form['issuer']['direct_debit_admin_issuer_name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Name'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_issuer_name', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['issuer']['direct_debit_admin_issuer_street'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Street'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_issuer_street', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['issuer']['direct_debit_admin_issuer_post_code'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Postal code'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_issuer_post_code', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['issuer']['direct_debit_admin_issuer_city'] = array(
+        '#type' => 'textfield',
+        '#title' => t('City'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_issuer_city', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+
+
+    $form['receipt'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Set receipt text data'),
+        '#description' => '<p>' . t('Text data to be included in the Direct Debit receipt.') . '</p>'
+    );
+
+    $form['receipt']['direct_debit_admin_receipt_title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Title'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_receipt_title', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+
+    $form['receipt']['direct_debit_admin_receipt_header'] = array(
+        '#type' => 'textarea',
+        '#cols' => 80,
+        '#rows' => 5,
+        '#title' => t('Header'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_receipt_header', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+
+    $form['receipt']['direct_debit_admin_receipt_footer'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Footer'),
+        '#cols' => 80,
+        '#rows' => 5,
+        '#default_value' => check_plain(variable_get('direct_debit_admin_receipt_footer', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+
+    $form['mail'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Set mail text data'),
+        '#description' => '<p>' . t('Text data to be included in the Direct Debit confirmation mail.') . '</p>'
+    );
+    $default_mail = variable_get('site_mail', ini_get('sendmail_from'));
+    $form['mail']['direct_debit_admin_mail_from'] = array(
+        '#type' => 'textfield',
+        '#title' => t('From'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_mail_from', $default_mail)),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['mail']['direct_debit_admin_mail_subject'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Subject'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_mail_subject', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['mail']['direct_debit_admin_mail_header'] = array(
+        '#type' => 'textarea',
+        '#cols' => 80,
+        '#rows' => 5,
+        '#title' => t('Body (first part)'),
+        '#default_value' => check_plain(variable_get('direct_debit_admin_mail_header', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+    $form['mail']['direct_debit_admin_mail_footer'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Body (second part)'),
+        '#cols' => 80,
+        '#rows' => 5,
+        '#default_value' => check_plain(variable_get('direct_debit_admin_mail_footer', '')),
+        '#required' => FALSE,
+            // '#description' => t(''),
+    );
+
+    $form['mail']['preview_link'] = array(
+        '#value' => t('After submitting the form values you can see the <a href="@link" target="blank">mail preview</a>.', array('@link' => url('direct_debit/preview/mail'))),
+    );
+
+
+    // $form['submit'] = array(
+    // '#type' => 'submit',
+    // '#value' => t('Save configuration'),
+    // );
+    // 
+    // $form['reset'] = array(
+    // '#type' => 'submit',
+    // '#value' => t('Reset to defaults'),
+    // );
+
+    $form['array_filter'] = array('#type' => 'hidden');
+
+    $form = system_settings_form($form);
+
+    return $form;
+}
+
+/**
+ * Validate Update Form
+ */
+function direct_debit_admin_setings_update_form_validate($form, &$form_state) {
+    date_validate($form['update']['direct_debit_update_expiration']);
+}
+
+/**
+ * Submit Update Form
+ */
+function direct_debit_admin_setings_update_form_submit($form, &$form_state) {
+    $result = direct_debit_admin_settings_general_submit($form, $form_state);
+
+
+
+    if (!$result) {
+        drupal_set_message(t('An error occurred while submitting the form. Please check your input values and try again. If this error persists, please contact the site administrator.'));
+        return;
+    }
+
+    // Check for a new uploaded update, and proceed it.
+    if ($file = file_save_upload('direct_debit_update_bank_identification_numbers_upload', array('file_validate_extensions' => array('txt csv')))) {
+        direct_debit_dta_import_german_bank_identification_numbers($file->uri);
+        file_delete($file);
+    }
+
+    if ($op == t('Reset to defaults')) {
+        drupal_set_message(t('The configuration options have been reset to their default values.'));
+    } else {
+        drupal_set_message(t('The configuration options have been saved.'));
+    }
+}
+
+/**
+ * validate the settings form
+ */
+function direct_debit_admin_settings_form_validate($form, &$form_state) {
+
+    if (!empty($form_state['values']['direct_debit_dta_bank_identification_number'])
+            && !direct_debit_valid_bank_identification_number($form_state['values']['direct_debit_dta_bank_identification_number'])) {
+
+        form_set_error('direct_debit_dta_bank_identification_number', t('Invalid Bank Identification Number.'));
+    }
+
+    if (!empty($form_state['values']['direct_debit_dta_bank_account_number'])
+            && !direct_debit_valid_bank_account_number($form_state['values']['direct_debit_dta_bank_account_number'])) {
+
+        form_set_error('direct_debit_dta_bank_account_number', t('Invalid Bank Identification Number.'));
+    }
+
+    if (!empty($form_state['values']['direct_debit_dta_file_prefix'])) {
+        // validate filename
+        // Check for illegal characters in preset names
+        if (preg_match('%[^0-9a-zA-Z_\-\ ]%', $form_state['values']['direct_debit_dta_file_prefix'])) {
+            form_set_error('direct_debit_dta_file_prefix', t('The DTA file prefix must contain not more than 100 alphanumeric characters, underscores (_) or hyphens (-).'));
+        }
+
+        if (100 < strlen($form_state['values']['direct_debit_dta_file_prefix'])) {
+            form_set_error('direct_debit_dta_file_prefix', t('The file name prefix must have not more than 100 characters.'));
+        }
+    }
+
+    // Try to load the DTA.php but don't return if not found because we want to check for the other form fields below too
+    if (empty($form_state['values']['direct_debit_dta_file_path'])) {
+        // set the direct_debit_dta_file_path should be performed in submit
+        // but we already need the variable here to validate the strings for dta
+        variable_set('direct_debit_dta_file_path', '');
+        if (!direct_debit_admin_require_once_dta(TRUE)) {
+            drupal_set_message(t('Unable to load the file DTA.php. Please check the path to the file DTA.php below.'), 'error', FALSE);
+        }
+    } else if (!direct_debit_admin_require_once_dta(TRUE, $form_state['values']['direct_debit_dta_file_path'])) {
+        form_set_error('direct_debit_dta_file_path', t('Unable to load the file DTA.php. Please check the path to the file DTA.php below.'));
+    }
+
+    // for the case of automatic path detection we need to correct the direct_debit_dta_file_path in the form
+    if (empty($form_state['values']['direct_debit_dta_file_path'])) {
+        $form_state['values']['direct_debit_dta_file_path'] = check_plain(variable_get('direct_debit_dta_file_path', $form_state['values']['direct_debit_dta_file_path']));
+    }
+
+
+    // *** for the below operations, the DTA.php has to be included ***
+    // Check for existing class DTA
+    if (!class_exists('DTA')) {
+        drupal_set_message(t('Unable to load the file DTA.php. Please check the path to the file DTA.php below.'), 'error', FALSE);
+        return;
+    }
+
+    // we need to create an object of DTA to make the dta strings later valid
+    $dta_file = new DTA(DTA_DEBIT);
+
+    // make the strings valid by using the DTA method makeValidString()
+    $form_state['values']['direct_debit_dta_name'] = substr($dta_file->makeValidString(strtoupper($form_state['values']['direct_debit_dta_name'])), 0, 54);
+    $form_state['values']['direct_debit_dta_reference_text'] = $dta_file->makeValidString(strtoupper($form_state['values']['direct_debit_dta_reference_text']), 0, 54);
+}
+
+/**
+ * Save the settings form and proceed indicated actions
+ */
+function direct_debit_admin_settings_form_submit($form, &$form_state) {
+    if (!direct_debit_admin_settings_general_submit($form, $form_state)) {
+        drupal_set_message(t('An error occurred while submitting the form. Please check your input values and try again. If this error persists, please contact the site administrator.'));
+        return;
+    }
+
+    if ($op == t('Reset to defaults')) {
+        drupal_set_message(t('The configuration options have been reset to their default values.'));
+    } else {
+        // correct the variables that needs a different treatment as in general_submit
+        variable_set('direct_debit_admin_receipt_header', $form_state['values']['direct_debit_admin_receipt_header']);
+        variable_set('direct_debit_admin_receipt_footer', $form_state['values']['direct_debit_admin_receipt_footer']);
+        drupal_set_message(t('The configuration options have been saved.'));
+    }
+}
+
+/**
+ * General submit function
+ *
+ * @see direct_debit_admin_settings_form_submit
+ * @see direct_debit_admin_setings_update_form_submit
+ */
+function direct_debit_admin_settings_general_submit($form, &$form_state) {
+    /** copied from system_settings_form_submit * */
+    $op = isset($form_state['values']['op']) ? $form_state['values']['op'] : '';
+
+    // Exclude unnecessary elements.
+    unset($form_state['values']['submit'], $form_state['values']['reset'], $form_state['values']['form_id'], $form_state['values']['op'], $form_state['values']['form_token'], $form_state['values']['form_build_id']);
+
+    foreach ($form_state['values'] as $key => $value) {
+        if ($op == t('Reset to defaults')) {
+            variable_del($key);
+        } else {
+            if (is_array($value) && isset($form_state['values']['array_filter'])) {
+                $value = array_keys(array_filter($value));
+            }
+            variable_set($key, $value);
+        }
+    }
+
+    /** end copied from system_settings_form_submit * */
+    return TRUE;
+}
+
+/**
+ * Validates a given Bank Identification Number.
+ *
+ * @param string $bank_identification_number teh given Bank Identification Number
+ * @return boolean TRUE if valid, otherwise FALSE
+ */
+function direct_debit_dta_bank_identification_number_validate($bank_identification_number) {
+//    $result = db_query("SELECT COUNT(*) FROM direct_debit_bank_identification_numbers WHERE bank_identification_number = '%s'", $bank_identification_number)->fetchField();
+    $result = db_query("SELECT COUNT(*) FROM direct_debit_bank_identification_numbers WHERE bank_identification_number = '$bank_identification_number'")->fetchField();
+
+    if (!$result) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+ * receive the direct debit data and process it
+ *
+ * @param array $input_data received (raw) data
+ * @return boolean: true, if there are no errors; otherwise false
+ */
+function direct_debit_pp_do_payment($input_data, $mode = 'test') {
+    $data = array();
+    $error = array();
+    $result = array();
+
+    // validate data (have we received all required data?; is the data valid? )
+    if (!direct_debit_pp_validate_data($input_data, $data, $error)) {
+        return array('error' => $error);
+    }
+
+    // create and check hash to prevent multiple submitting of the same contribution
+    $hash = direct_debit_pp_hash($data, $error);
+
+    if (!$hash) {
+        return array('error' => $error);
+    }
+
+    // append hash to data array to store it later in the database
+    $data['hash'] = $hash;
+    // set receive_date to current date 
+    $data['receive_date'] = time();
+    // set contribution status to pending
+    $data['contribution_status_id'] = 2;
+    // set billing to 1 if donator wants a bill otherwise 0
+    $data['billing_type'] = 0;
+
+    if ('live' != $mode) {
+        // we are in test mode ... so we don't store the payment data
+        $result['trxn_result_code'] = 'OK';
+        $result['trxn_id'] = 'Test' . md5(uniqid(rand(), TRUE));
+        $result['gross_amount'] = $data['amount'];
+        return $result;
+    }
+
+    // **proceed only in live mode (not in test)**
+    // store data in database
+    if (!direct_debit_pp_store_data($data, $error)) {
+        return array('error' => $error);
+    }
+
+    // get last insert ID
+//    $last_insert_id = db_last_insert_id('direct_debit', 'did');
+    $last_insert_id = db_query("SELECT MAX(did) FROM direct_debit")->fetchField();
+    if (!$last_insert_id) {
+        watchdog('direct debit', "Error code: 'unknown did'.", array(), WATCHDOG_ERROR);
+        return $error['did'] = array('code' => 'unknown did');  // Paranoia - in the unlikley case we don't receive the did
+    }
+
+    // trxn_id in civicrm needs to bee unique so we create one like: DD{did}xxx where xxx is a random code
+    $trxn_id = 'DD' . $last_insert_id . strtoupper(substr(md5(uniqid(rand(), TRUE)), 0, 3));
+
+
+    $updated_result = db_update('direct_debit')
+            ->fields(
+                    array(
+                        'trxn_id' => $trxn_id,
+                    )
+            )
+            ->condition('did', $last_insert_id)
+            ->execute();
+    //if (!db_query("UPDATE {direct_debit} SET trxn_id = '%s' WHERE did = %d", $trxn_id, $last_insert_id)) {
+    if (!$updated_result) {
+        watchdog('direct debit', "Error code: 'failed to create trxn_id'.", array(), WATCHDOG_ERROR);
+        return $error['trxn_id'] = array('code' => 'failed to create trxn_id');
+    }
+
+    // return error
+    if (!empty($error)) {
+        return array('error' => $error);
+    }
+
+    $result['trxn_id'] = $trxn_id;
+    $result['trxn_result_code'] = 'OK';
+    $result['gross_amount'] = $data['amount'];
+
+    return $result;
+}
+
+/**
+ * returns the fields for the relevant input_data we want to store (see table {direct_debit})
+ *
+ * @return array $data array tat describes the data structure
+ */
+function direct_debit_pp_data_array() {
+    $data = array(
+        'payment_action' => '',
+        'amount' => '',
+        'account_holder' => '',
+        'bank_account_number' => '',
+        'bank_identification_number' => '',
+        'bank_name' => '',
+        'contribution_type' => '',
+        'contribution_page_id' => '',
+        'contribution_description' => '',
+        'currency_id' => '',
+        'invoice_id' => '',
+        'ip_address' => '',
+        'organization_name' => '',
+        'first_name' => '',
+        'last_name' => '',
+        'email' => '',
+        'street' => '',
+        'city' => '',
+        'state_province' => '',
+        'country' => '',
+        'postal_code' => '',
+        'form_id' => '',
+        'hash' => '',
+    );
+    return $data;
+}
+
+/**
+ * validates the data needed for direct debit transactions
+ *
+ * @param array $input_data received raw data
+ * @param array $data validated data
+ * @param array $error detailed error descriptions for each field
+ * @return boolean: true, if there are no errors; otherwise false
+ */
+function direct_debit_pp_validate_data($input_data, &$data, &$error) {
+    $data = direct_debit_pp_data_array();
+
+    foreach ($data as $key => $value) {
+        if ('amount' == $key
+                || 'currency_id' == $key
+                || 'invoice_id' == $key
+                || 'ip_address' == $key
+                || 'first_name' == $key
+                || 'last_name' == $key
+                || 'account_holder' == $key
+                || 'street' == $key
+                || 'city' == $key
+                || 'country' == $key
+                || 'postal_code' == $key
+                || 'form_id' == $key) {
+            // data for all the above cases is required and shouldn't be empty 
+            if (empty($input_data[$key])) {
+                $error[$key] = array('code' => 'field required');
+                watchdog('direct debit', "Error code: 'field required' for field: @field.", array('@field' => $key), WATCHDOG_ERROR);
+            }
+        } else if ('email' == $key) {
+            // Verify the syntax of the given e-mail address.
+            if (empty($input_data['email'])) {
+                $error['email'] = array('code' => 'field required');
+                watchdog('direct debit', "Error code: 'field required' for field: email.", array(), WATCHDOG_ERROR);
+            } else if (!valid_email_address($input_data['email'])) {
+                $error['email'] = array('code' => 'invalid data');
+                watchdog('direct debit', "Error code: 'invalid data' for field: email.", array(), WATCHDOG_ERROR);
+            }
+        } else if ('bank_account_number' == $key) {
+            if (empty($input_data['bank_account_number']) || !direct_debit_valid_bank_account_number($input_data['bank_account_number'])) {
+                $error['bank_account_number'] = array('code' => 'invalid data',
+                    'message' => 'bank_account_number');
+                watchdog('direct debit', "Error code: 'invalid data' for field: bank_account_number.", array(), WATCHDOG_ERROR);
+            }
+        } else if ('bank_identification_number' == $key) {
+            if (empty($input_data['bank_identification_number']) || !direct_debit_valid_bank_identification_number($input_data['bank_identification_number'])) {
+                $error['bank_identification_number'] = array('code' => 'invalid data',
+                    'message' => 'bank_identification_number');
+                watchdog('direct debit', "Error code: 'invalid data' for field: bank_identification_number.", array(), WATCHDOG_ERROR);
+            }
+        } else if ('bank_name' == $key) {
+            if (empty($input_data['bank_name']) || !direct_debit_valid_bank_name($input_data['bank_name'])) {
+                $error['bank_name'] = array('code' => 'invalid data',
+                    'message' => 'bank_name');
+                watchdog('direct debit', "Error code: 'invalid data' for field bank_name.", array(), WATCHDOG_ERROR);
+            }
+        }
+    } // end foreach
+    if (!empty($error)) {
+        return FALSE;
+    }
+
+    foreach ($data as $key => $value) {
+        if (isset($input_data[$key])) {
+            $data[$key] = $input_data[$key];
+        }
+    }
+    return TRUE;
+}
+
+/**
+ * create md5 hash over data fields and check if its already registered in the database
+ * 
+ * This function should prevent to register the same direct debit transaction multiple times.
+ *
+ * @param array $data 
+ * @return void
+ */
+function direct_debit_pp_hash($data, &$error) {
+    $str_data = implode(",", $data);
+
+    $hash = hash("md5", $str_data);
+
+    // check if hash already exist
+//    $result = db_result(db_query("SELECT COUNT(*) FROM {direct_debit} WHERE hash = '%s'", $hash));
+    $result = db_query("SELECT COUNT(*) FROM direct_debit WHERE hash = ':hash'", array(':hash' => $hash))->fetchField();
+
+    if (0 != $result) {
+        $error['hash'] = array('code' => 'data exists');
+        watchdog('direct debit', "Error code: 'data exists'.", array(), WATCHDOG_ERROR);
+        return FALSE;
+    }
+
+    return $hash;
+}
+
+function direct_debit_valid_bank_account_number($ban) {
+    if (10 < strlen($ban) || !preg_match('%^\d*$%', $ban)) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+function direct_debit_valid_bank_identification_number($bin) {
+    if (8 != strlen($bin) || !is_numeric($bin) || !direct_debit_dta_bank_identification_number_validate($bin)) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+function direct_debit_valid_bank_name($bank) {
+    if ('invalid' == $bank) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+ * store the direct debit data in the database
+ *
+ * @param string $data 
+ * @return void
+ */
+function direct_debit_pp_store_data($data, &$error) {
+
+    $schema = drupal_get_schema('direct_debit');
+
+    $query_vars = '';
+    $query_placeholder = '';
+    $query_data = array();
+
+    // for the structure of data see direct_debit_pp_data_array()
+    foreach ($data as $key => $value) {
+        if (!empty($query_vars)) {
+            $query_vars .= ', ';
+            $query_placeholder .= ', ';
+        }
+        $query_vars .= $key;
+//        $query_placeholder .= db_type_placeholder($schema['fields'][$key]['type']);
+//        $query_placeholder .= $schema['fields'][$key]['type'];
+        $query_data[$key] = $data[$key];
+    }
+//    $query = 'INSERT INTO {direct_debit} (' . $query_vars . ') VALUES (' . $query_placeholder . ')';//Original
+//
+//    echo $query_vars;
+//    $query_vars = explode(',', $query_vars);
+//    echo '<pre>';
+//    print_r($query_vars);//fields
+//    echo '<hr>';
+//    print_r($query_data);//values
+//    exit;
+//    $result = db_insert('direct_debit')
+//            ->fields($query_vars)
+//            ->values($query_data)
+//            ->execute();
+//    echo '<pre>';
+//    print_r($result);
+//    exit;
+    $result = drupal_write_record('direct_debit', $query_data);
+    if (!$result) {
+        $error['store_data'] = array('code' => 'failed to insert data');
+        watchdog('direct debit', "Error code: 'failed to insert data'.", array(), WATCHDOG_ERROR);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+ * Menu callback; present an administrative direct_debit listing.
+ */
+function direct_debit_admin() {
+    $output = '';
+
+    // show update notifier
+    $date = variable_get('direct_debit_update_expiration', '');
+    if (is_array($date) && variable_get('direct_debit_update_notification', FALSE)) {
+        $timestamp = mktime(date("H"), date("i"), date("s"), $date['month'], $date['day'], $date['year']);
+        if (time() > ($timestamp - 86400 * 7) && time() < $timestamp) {
+            drupal_set_message(t('Reminder: Don\'t forget to update the Bank Identification Numbers at @date. Go to <a href="@dd_settings_url">Administer > Settings > Direct Debit</a> to perform the update.', array('@date' => format_date($timestamp, 'small'), '@dd_settings_url' => url('admin/settings/direct_debit'))), 'warning', FALSE);
+        } else if (time() >= $timestamp) {
+            drupal_set_message(t('Warning: The Bank Identification Numbers are out-of-date since @date. Go to <a href="@dd_settings_url">Administer > Settings > Direct Debit</a> to perform the update.', array('@date' => format_date($timestamp, 'small'), '@dd_settings_url' => url('admin/settings/direct_debit'))), 'warning', FALSE);
+        }
+    }
+//  $output .= drupal_get_form('direct_debit_admin_filter_form');
+    $output .= drupal_render(drupal_get_form('direct_debit_admin_overview'));
+
+    return $output;
+}
+
+/**
+ * Form builder; Builds the direct debit overview form for the admin.
+ *
+ * @return
+ *   The form structure.
+ * @ingroup forms
+ * @see direct_debit_admin_overview_validate()
+ * @see direct_debit_admin_overview_submit()
+ * @see theme_direct_debit_admin_overview()
+ */
+function direct_debit_admin_overview() {
+    $form = array();
+
+    $form['dta'] = array(
+        '#type' => 'fieldset', '#title' => t('Create DTA file'),
+    );
+
+
+    $form['dta']['create_dta_button'] = array(
+        '#type' => 'submit',
+        '#value' => t('Create DTA file'),
+        '#prefix' => '<div class="create_dta">',
+        '#suffix' => '</div>',
+        '#submit' => array('direct_debit_admin_overview_submit'),
+    );
+
+// check if there is a DTA.php and if there are any pending contributions
+    if (!direct_debit_admin_require_once_dta(FALSE)) {
+        // if no dta or no pending contributions disable button
+        $form['dta']['create_dta_button']['#disabled'] = TRUE;
+        $form['dta']['create_dta_button']['#attributes'] = array(array('class' => 'error'));
+        drupal_set_message(t('Unable to create the DTA file. Please check the path to the file DTA.php in <a href="@dd_settings_url">Administer > Settings > Direct Debit</a>.', array('@dd_settings_url' => url('admin/settings/direct_debit'))), 'error', FALSE);
+    } else if (!direct_debit_admin_count_pending_contributions()) {
+        $form['dta']['create_dta_button']['#disabled'] = TRUE;
+    }
+
+
+    $form['dta']['create_dta_description'] = array(
+        '#prefix' => t('Creates a DTA File using all new contributions. The Contribution Status will be updated from "pending" to "in progress". This button is only enabled if new contributions available.') . '<div class="description">',
+        '#suffix' => '</div><br>' . t('DTA files created in the past are collected in the <a href="@link">DTA files archive</a>.', array('@link' => url('direct_debit/dta'))) . '</p>',
+    );
+
+    // build an 'Update options' form
+    $form['options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Update options'),
+    );
+
+    $options = direct_debit_get_contribution_status();
+
+    $form['options']['update'] = array(
+        '#prefix' => 'Set status to : <div class="container-inline">',
+        '#suffix' => '</div>',
+    );
+
+    $form['options']['update']['update_operation'] = array(
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => '',
+    );
+
+    $form['options']['update']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Update'),
+        '#submit' => array('direct_debit_admin_overview_submit'),
+    );
+
+    $form = array_merge($form, direct_debit_admin_filter_form());
+
+    $form['overview'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Contribution Overview'),
+        '#theme' => 'direct_debit_admin_overview_table',
+    );
+
+    // fields of interest
+    $data_fields = direct_debit_admin_data_fields();
+
+//    // sortable table header
+    $header = array(theme('table_select_header_cell'));
+
+    $str_data_fields = '';
+    foreach ($data_fields as $key => $db_field) {
+        $str_data_fields .= ', ' . $key;
+
+        if ('currency_id' == $key) {
+            continue;
+        }
+        $header[$key] = array(
+            'data' => $data_fields[$key],
+            'field' => $key,
+        );
+    }
+
+    $header['receive_date']['sort'] = 'desc';
+
+    $header['billing'] = array(
+        'data' => 'Billing'
+    );
+
+    $str_data_fields = ltrim($str_data_fields, ', ');
+
+    // get data to fill table
+    $filter = direct_debit_admin_build_filter_query();
+    $args = array($str_data_fields);
+    $args = array_merge($args, $filter['args']);
+//    echo '<pre>';print_r($filter['where']); exit;
+//    $result = pager_query('SELECT %s FROM {direct_debit} ' . $filter['join'] . ' ' . $filter['where'] . ' ' . tablesort_sql($header), 30, 0, NULL, $args);
+//    $query = db_select('direct_debit' . $filter['join'] . ' ' . $filter['where'])->extend('PagerDefault')->extend('TableSort');
+
+    $query = db_select('direct_debit', 'd')->extend('PagerDefault')->extend('TableSort');
+//    $query->join($filter['join']);
+//    $query->condition($filter['where']);
+    $query->fields('d', array('trxn_id', 'receive_date', 'account_holder', 'amount', 'currency_id', 'bank_account_number', 'bank_identification_number', 'bank_name', 'contribution_status_id'));
+    $query->orderByHeader($header);
+    $query->limit(30);
+    $result = $query->execute();
+
+    while ($row = $result->fetchAssoc()) {
+
+        // amount and currency_id should appear in one column
+        $row['amount'] .= ' ' . $row['currency_id'];
+        unset($row['currency_id']);
+
+        // get the status to set the class for each row
+        $form['overview']['fields']['#attributes'][$row['trxn_id']] = array('class' => direct_debit_get_contribution_status($row['contribution_status_id'], FALSE, TRUE));
+
+        $row['receive_date'] = format_date($row['receive_date'], 'small');
+
+        $row['contribution_status_id'] = direct_debit_get_contribution_status($row['contribution_status_id'], TRUE, TRUE);
+
+        $row['billing'] = l(t('receipt'), 'direct_debit/receipt/' . $row['trxn_id'], array('attributes' => array('target' => 'blank')));
+
+        // build a table listing the transactions
+        foreach ($row as $key => $value) {
+
+            $transactions[$row['trxn_id']] = '';
+
+            if ('trxn_id' == $key) {
+                $link = l($row['trxn_id'], 'direct_debit/details/' . $row['trxn_id']);
+                $form['overview']['fields'][$key][$row['trxn_id']] = array('#value' => check_markup($link));
+            } else if ('billing' == $key) {
+                $form['overview']['fields'][$key][$row['trxn_id']] = array('#value' => check_markup($row[$key]));
+            } else {
+                // the other fields are just plain text
+                $form['overview']['fields'][$key][$row['trxn_id']] = array('#value' => check_plain($row[$key]));
+            }
+        }
+    }
+
+    $form['overview']['header'] = array(
+        '#type' => 'value',
+        '#value' => $header,
+    );
+
+//    $form['overview']['check_tx'] = array('#type' => 'checkboxes', '#options' => isset($transactions) ? $transactions : array());
+//    $form['overview']['pager'] = array('#value' => theme('pager', NULL, 30, 0));
+    $form['overview']['pager'] = array('#theme' => 'pager');
+    return $form;
+
+    // // todo ... we need to configure the pager ... eg. 25 50 all ... we need all to be able to build the dta
+}
+
+/**
+ * Get the contribution stats array or name
+ *
+ * @param mixed $key id of the status (contribution_status_id) which name we want to get or the value which id we want to get
+ * @param boolean $translation: TRUE if we want the localized status, False if we want it without localization
+ * @param boolean $include_all: TRUE if status pending and in_progress will be included otherwise FALSE
+ * @return mixed: by given id: the name of a status otherwise an array of all status with its ids
+ */
+function direct_debit_get_contribution_status($key = NULL, $translation = TRUE, $include_all = FALSE) {
+
+    // status corresponds to the CiviCRM status
+    $status = array(
+        '1' => ($translation ? t('completed') : 'completed' ),
+        '3' => ($translation ? t('canceled') : 'canceled' ),
+        '4' => ($translation ? t('failed') : 'failed' ),
+    );
+
+    if ($include_all) {
+        $status[2] = ($translation ? t('pending') : 'pending' );
+        $status[5] = ($translation ? t('in progress') : 'in_progress');
+    }
+
+    if (!isset($key)) {
+        // we want the whole array
+        return $status;
+    } else if (is_numeric($key) && array_key_exists($key, $status)) {
+        // we want the status by given id
+        return $status[$key];
+    } else if (!is_numeric($key)) {
+        return array_search($key, $status);
+    } else {
+        return FALSE;
+    }
+}
+
+/**
+ * Get the contribution_status_id by given status value
+ *
+ * @param string $status the verbal status value for what we want the id
+ * @param string $translation if we want to look for a localized status value we have to set translation to TRUE
+ * @return void
+ */
+function direct_debit_get_contribution_status_id($status, $translation = FALSE) {
+    return (direct_debit_get_contribution_status($status, $translation, TRUE));
+}
+
+/**
+ * Validate direct_debit_admin_overview form submissions.
+ *
+ * We can't execute any 'Update options' if no direct debit transactions were selected.
+ */
+function direct_debit_admin_overview_validate($form, &$form_state) {
+    // $form_state['values']['comments'] = array_diff($form_state['values']['comments'], array(0));
+    // if (count($form_state['values']['comments']) == 0) {
+    //   form_set_error('', t('Please select one or more comments to perform the update on.'));
+    //   drupal_goto('admin/content/comment');
+    // }
+}
+
+/**
+ * Process direct_debit_admin_overview form submissions.
+ *
+ * Execute the chosen 'Update option' on the selected direct debit transactions.
+ */
+function direct_debit_admin_overview_submit($form, &$form_state) {
+
+    switch ($form_state['values']['op']) {
+        case t('Create DTA file'):
+            $dta_file_id = direct_debit_admin_create_dta_and_update_status();
+            if ($dta_file_id) {
+                drupal_goto('direct_debit/dta/' . $dta_file_id);
+            }
+            break;
+        case t('Update'):
+            $status = $form_state['values']['update_operation'];
+            $checked_tx = array();
+            $count = 0;
+            if (count($form_state['values']['check_tx']) > 0) { // UPDATE // ADDED THIS CONDITION
+                foreach ($form_state['values']['check_tx'] as $key => $value) {
+                    if ('0' != $value) {
+                        $checked_tx[] = $key;
+                        $count++;
+                    }
+                }
+            }
+
+            // $checked_tx will be empty if no contribution was checked
+            if (empty($checked_tx)) {
+                drupal_set_message(t('You have to select at least one contribution to perform an update action.'), 'error');
+                return;
+            }
+
+            $result = direct_debit_admin_update_status($form_state['values']['update_operation'], $checked_tx);
+
+            // additional advice contribution status complete
+            $advice = '';
+            if (1 == $status) {
+                $advice = ' ' . t('Please make sure that you have proceeded these contributions correctly: they need to have the <em>in progress</em> state.');
+            }
+
+            $details = direct_debit_admin_update_status_error_details($array);
+
+            if (empty($result)) {
+                drupal_set_message(t('The selected contributions could not be updated.'), 'error');
+            } else {
+                if (!empty($result['success'])) {
+                    // we have (some) successful updates 
+                    drupal_set_message(t('@count of @n selected contributions where updated successfully to status <em>@status</em>. A confirmation mail was send. !details', array('@count' => count($result['success']),
+                                '@n' => $count,
+                                '@status' => direct_debit_get_contribution_status($status),
+                                '!details' =>
+                                '<fieldset class="collapsible collapsed">' .
+                                '<legend>' . t('See affected transactions') . '</legend>' .
+                                direct_debit_admin_update_status_error_details($result['success']) .
+                                '</fieldset>',
+                            )));
+                }
+
+                if (!empty($result['errors']) && !empty($result['errors']['direct_debit'])) {
+                    drupal_set_message(t('@count of @n selected contributions could not be updated to <em>@status</em>.!advice !details', array('@count' => count($result['errors']['direct_debit']),
+                                '@n' => $count,
+                                '@status' => direct_debit_get_contribution_status($status),
+                                '!advice' => $advice,
+                                '!details' =>
+                                '<fieldset class="collapsible collapsed">' .
+                                '<legend>' . t('See affected transactions') . '</legend>' .
+                                direct_debit_admin_update_status_error_details($result['errors']['direct_debit']) .
+                                '</fieldset>',
+                            )), 'error');
+                }
+
+                if (!empty($result['errors']) && !empty($result['errors']['civicrm'])) {
+                    drupal_set_message(t('@count of @n selected contributions where updated to <em>@status</em>, but we could not update their status in CiviCRM. !details', array('@count' => count($result['errors']['civicrm']),
+                                '@n' => $count,
+                                '@status' => direct_debit_get_contribution_status($status),
+                                '!details' =>
+                                '<fieldset class="collapsible collapsed">' .
+                                '<legend>' . t('See affected transactions') . '</legend>' .
+                                direct_debit_admin_update_status_error_details($result['errors']['civicrm']) .
+                                '</fieldset>',
+                            )), 'error');
+                }
+
+                if (!empty($result['errors']) && !empty($result['errors']['mail'])) {
+                    drupal_set_message(t('@count of @n selected contributions where updated to <em>@status</em> successfully, but there was no confirmation mail sent to their contributors. !details', array('@count' => count($result['errors']['mail']),
+                                '@n' => $count,
+                                '@status' => direct_debit_get_contribution_status($status),
+                                '!details' =>
+                                '<fieldset class="collapsible collapsed">' .
+                                '<legend>' . t('See affected transactions') . '</legend>' .
+                                direct_debit_admin_update_status_error_details($result['errors']['mail']) .
+                                '</fieldset>',
+                            )), 'warning');
+                }
+            }
+            break;
+    }// end switch
+}
+
+/**
+ * build a string with links to detail pages for showing in error messages
+ *
+ * @param array $array 
+ * @return string
+ */
+function direct_debit_admin_update_status_error_details($array) {
+
+    if (empty($array)) {
+        return '';
+    }
+
+    $details = '';
+    foreach ($array as $key => $value) {
+        $details .= empty($details) ? '' : ', ';
+        $details .= l($value, 'direct_debit/details/' . $value, array('attributes' => array('target' => 'blank')));
+    }
+
+    return '<p>' . $details . '</p>';
+}
+
+/**
+ * Theme the direct debit admin form.
+ *
+ * @param $form
+ *   An associative array containing the structure of the form.
+ * @ingroup themeable
+ */
+function theme_direct_debit_admin_overview($form) {
+    drupal_add_css(drupal_get_path('module', 'direct_debit') . '/direct_debit.css');
+//  $output .= $form;
+    return $output;
+}
+
+function theme_direct_debit_admin_overview_table($form) {
+    $rows = array();
+    if (isset($form['fields']['trxn_id']) && is_array($form['fields']['trxn_id'])) {
+        foreach (element_children($form['fields']['trxn_id']) as $tx) {
+            $row = array('data' => '');
+            $row['data'][] = drupal_render($form['check_tx'][$tx]);
+            foreach (element_children($form['fields']) as $key) {
+                $row['data'][] = drupal_render($form['fields'][$key][$tx]);
+            }
+            if (is_array($form['fields']['#attributes'][$tx])) {
+                foreach ($form['fields']['#attributes'][$tx] as $attribute => $value) {
+                    $row[$attribute] = $value;
+                }
+            }
+
+            $rows[] = $row;
+        }
+    } else {
+        $rows[] = array(array('data' => t('No transactions available.'), 'colspan' => '13'));
+    }
+
+    //$form['#children'] = ..
+//    $output = theme('table', $form['header']['#value'], $rows);
+    $output = theme('table', array(
+        'header' => $form['']['header']['#value'],
+        'rows' => $rows
+            ));
+    if ($form['pager']['#value']) {
+        $output .= drupal_render($form['pager']);
+    }
+
+    return $output;
+}
+
+/**
+ * List direct_debit administration filters that can be applied.
+ * 
+ * inspired by (core) node module
+ */
+function direct_debit_admin_filters() {
+//    echo 'Filters';
+    // get al transaction status
+    $options = array();
+    $o = direct_debit_get_contribution_status(NULL, TRUE, TRUE);
+
+    foreach ($o as $key => $value) {
+        $options['contribution_status_id-' . $key] = $value;
+    }
+    $filters['contribution_status_id'] = array(
+        'title' => t('Status'),
+        'options' => $options,
+    );
+    return $filters;
+}
+
+/**
+ * Build query for direct_debit administration filters based on session.
+ * 
+ * inspired by (core) node module
+ */
+function direct_debit_admin_build_filter_query() {
+    $filters = direct_debit_admin_filters();
+
+    // Build query
+    $where = $args = array();
+    $join = '';
+
+    if (empty($_SESSION['direct_debit_overview_filter'])) {
+        return array('where' => $where, 'join' => $join, 'args' => $args);
+    }
+
+    foreach ($_SESSION['direct_debit_overview_filter'] as $index => $filter) {
+        list($key, $value) = $filter;
+        switch ($key) {
+            case 'contribution_status_id':
+                // Note: no exploitable hole as $key/$value have already been checked when submitted
+                list($key, $value) = explode('-', $value, 2);
+                $where[] = $key . ' = %d';
+                break;
+        }
+        $args[] = $value;
+    }
+    $where = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    return array('where' => $where, 'join' => $join, 'args' => $args);
+}
+
+/**
+ * Return form for direct_debit administration filters.
+ * 
+ * inspired by (core) node module
+ */
+function direct_debit_admin_filter_form() {
+    $session = &$_SESSION['direct_debit_overview_filter'];
+    $session = is_array($session) ? $session : array();
+    $filters = direct_debit_admin_filters();
+
+    $i = 0;
+    $form['filters'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Filter items'),
+        '#collapsible' => TRUE,
+        '#collapsed' => count($session) ? FALSE : TRUE,
+        '#theme' => 'direct_debit_admin_filters',
+    );
+
+    foreach ($session as $filter) {
+        list($type, $value) = $filter;
+
+        $value = $filters[$type]['options'][$value];
+
+        if ($i++) {
+            $form['filters']['current'][] = array('#value' => t('<em>and</em> where <strong>%a</strong> is <strong>%b</strong>', array('%a' => $filters[$type]['title'], '%b' => $value)));
+        } else {
+            $form['filters']['current'][] = array('#value' => t('<strong>%a</strong> is <strong>%b</strong>', array('%a' => $filters[$type]['title'], '%b' => $value)));
+        }
+    }
+
+    foreach ($filters as $key => $filter) {
+        $names[$key] = $filter['title'];
+        $form['filters']['status'][$key] = array('#type' => 'select', '#options' => $filter['options']);
+    }
+
+    $form['filters']['filter'] = array(
+        '#type' => 'radios',
+        '#options' => $names,
+        '#default_value' => 'contribution_status_id',
+    );
+    if (1 == count($filters)) {
+        $form['filters']['filter']['#attributes'] = array(array('class' => 'single_filter'));
+    }
+    $form['filters']['buttons']['submit'] = array(
+        '#type' => 'submit',
+        '#value' => (count($session) ? t('Refine') : t('Filter')),
+        '#submit' => array('direct_debit_admin_filter_form_submit'),
+    );
+    if (count($session)) {
+        $form['filters']['buttons']['undo'] = array(
+            '#type' => 'submit',
+            '#value' => t('Undo'),
+            '#submit' => array('direct_debit_admin_filter_form_submit'),
+        );
+        $form['filters']['buttons']['reset'] = array(
+            '#type' => 'submit',
+            '#value' => t('Reset'),
+            '#submit' => array('direct_debit_admin_filter_form_submit'),
+        );
+    }
+
+    drupal_add_js('misc/form.js', 'core');
+
+    return $form;
+}
+
+/**
+ * Theme direct_debit administration filter selector.
+ * 
+ * inspired by (core) node module
+ *
+ * @ingroup themeable
+ */
+function theme_direct_debit_admin_filters($form) {
+//   echo 'Filter';    
+//    echo '<br>theme_direct_debit_admin_filters';
+//    echo '<pre>';
+    $form = $form[''];
+//    print_r($form['buttons']);
+//    exit;
+
+    drupal_add_css(drupal_get_path('module', 'direct_debit') . '/direct_debit.css');
+    $output = '';
+    $output .= '<ul class="clear-block">';
+    $output .= t('Show only items where');
+    if (!empty($form['current'])) {
+        foreach (element_children($form['current']) as $key) {
+            $output .= '<li>' . drupal_render($form['current'][$key]) . '</li>';
+        }
+    }
+
+    $output .= '<li><dl class="multiselect">' . (!empty($form['current']) ? '<dt><em>' . t('and') . '</em> ' . t('where') . '</dt>' : '') . '<dd class="a">';
+    foreach (element_children($form['filter']) as $key) {
+        $output .= drupal_render($form['filter'][$key]);
+    }
+    $output .= '</dd>';
+
+    $output .= '<dt>' . t('is') . '</dt><dd class="b">';
+
+    foreach (element_children($form['status']) as $key) {
+        $output .= drupal_render($form['status'][$key]);
+    }
+    $output .= '</dd>';
+
+    $output .= '</dl>';
+    $output .= '<div class="container-inline" id="direct_debit-admin-buttons">' . drupal_render($form['buttons']) . '</div>';
+    $output .= '</li></ul>';
+    return $output;
+}
+
+/**
+ * Process result from direct_debit administration filter form.
+ * 
+ * inspired by (core) node module
+ */
+function direct_debit_admin_filter_form_submit($form, &$form_state) {
+    $filters = direct_debit_admin_filters();
+    switch ($form_state['values']['op']) {
+        case t('Filter'):
+        case t('Refine'):
+            if (isset($form_state['values']['filter'])) {
+                $filter = $form_state['values']['filter'];
+
+                // Flatten the options array to accommodate hierarchical/nested options.
+                $flat_options = form_options_flatten($filters[$filter]['options']);
+
+                if (isset($flat_options[$form_state['values'][$filter]])) {
+                    $_SESSION['direct_debit_overview_filter'][] = array($filter, $form_state['values'][$filter]);
+                }
+            }
+            break;
+        case t('Undo'):
+            array_pop($_SESSION['direct_debit_overview_filter']);
+            break;
+        case t('Reset'):
+            $_SESSION['direct_debit_overview_filter'] = array();
+            break;
+    }
+}
+
+/**
+ * Include PEARs Payment_DTA by require once
+ * 
+ * Offers a configurable way of the DTA.php file inclusion by using the user specified path
+ * or the include path.
+ * 
+ * If we pass the $file_path parameter we can use this function to check if the path exists and
+ * also to require once the DTA.php in $file_path. But the variable direct_debit_dta_file_path won't be set/changed.
+ *
+ * @param boolean $require_once TRUE, for including the file, FALSE for just checking its presence  
+ * @param string $file_path set the path directly. If this parameter is set, we don't use the one from variable_get
+ * @return boolean TRUE if the DTA.php file was found, otherwise FALSE
+ */
+function direct_debit_admin_require_once_dta($require_once = FALSE, $file_path = '') {
+    if (class_exists('DTA')) {
+        return TRUE;
+    }
+
+    // get the stored direct_debit_dta_file_path
+    $dta_file = check_plain(variable_get('direct_debit_dta_file_path', ''));
+
+    // if $file_path is set, 
+    if (!empty($file_path)) {
+        // override the dta_file (recently got from stored direct_debit_dta_file_path)
+        $dta_file = $file_path;
+    }
+
+    // direct_debit_dta_file_path is already configured or passed directly to the function
+    if (!empty($dta_file)) {
+        $dta_file .= '/DTA.php';
+
+        if (!file_exists($dta_file)) {
+            // bad configuration found: because the path was configured before but file isn't anymore in its place
+            return FALSE;
+        }
+        if ($require_once) {
+            require_once $dta_file;
+            if (!class_exists('DTA')) {
+                return FALSE;
+            }
+        }
+
+        return TRUE;
+    }
+
+    // check if dta is in includepath
+    $paths = explode(PATH_SEPARATOR, get_include_path());
+
+    foreach ($paths as $path) {
+        if (file_exists($path . '/Payment/DTA.php')) {
+            if ($require_once) {
+                require_once $path . '/Payment/DTA.php';
+            }
+            variable_set('direct_debit_dta_file_path', $path . '/Payment');
+            return TRUE;
+        } else if (file_exists($path . '/DTA.php')) {
+            if ($require_once) {
+                require_once $path . '/DTA.php';
+            }
+            variable_set('direct_debit_dta_file_path', $path);
+            return TRUE;
+        }
+    }
+
+    // last chance: we check filepath/Payment/DTA.php
+    //  $dta_file = file_directory_path() .'/Payment/DTA.php'; // DRUPAL 6
+    $dta_file = variable_get('file_' . file_default_scheme() . '_path', conf_path() . '/files') . '/Payment/DTA.php';
+    if (!file_exists($dta_file)) {
+        return FALSE;
+    }
+
+    if ($require_once) {
+        require_once $dta_file;
+    }
+
+    // we have found it so we set it for the next run
+    variable_set('direct_debit_dta_file_path', file_directory_path() . '/Payment');
+    return TRUE;
+}
+
+/**
+ * Helper function to convert a string to an array of lines with 27 characters
+ *
+ * @param DTA object $dta_file
+ * @param string $string this string will converted in valid lines
+ * @param int $line_count max lines of the array to be returned if there are more lines they will get ignored
+ * @param int $length: Length of the valid string (standard 27)
+ * 
+ * @return array of valid strings
+ */
+function direct_debit_dta_make_valid_lines($dta_file, $string, $line_count = NULL, $length = 27) {
+    $valid_strings = array();
+
+    $string = $dta_file->makeValidString(strtoupper($string));
+
+    $string_array = str_split($string, 27);
+
+    foreach ($string_array as $key => $value) {
+        // get max. first 3 lines a 27 characters of the description
+        if ($line_count && $line_count <= $key) {
+            break;
+        }
+        $value = trim($value);
+        if (!empty($value)) {
+            $valid_strings[] = $value;
+        }
+    }
+
+    return $valid_strings;
+}
+
+/**
+ * Output the data as downloadable file
+ * 
+ * Inspired by file_transfer function (includes/file.inc, http://api.drupal.org/api/function/file_transfer/6)
+ *
+ * @param string $str_data 
+ * @param array $headers 
+ * @return void
+ */
+function direct_debit_download_send($str_data, $headers) {
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    foreach ($headers as $header) {
+        // To prevent HTTP header injection, we delete new lines that are
+        // not followed by a space or a tab.
+        // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+        $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
+//        drupal_set_header($header);
+        $header = explode(':', $header);
+        $head_key = $header[0];
+        $head_val = $header[1];
+        drupal_add_http_header($head_key, $head_val);
+    }
+    print $str_data;
+    exit;
+}
+
+/**
+ * Imports bank identification numbers from the german Bundesbank
+ * 
+ * inspired by spenden-mit-system: http://www.online-spendensysteme.de
+ *             spendenMitSystem/_include/verwaltungBLZ.inc.php
+ *             Claus Coviello, www.webseiten-mit-sinn.de
+ * 
+ *  
+ *   1-8    Bank Identification Number
+ *   9      Flag, if Bank has Bank Identification Number ("1") or not ("2")
+ *   10-67  Bank Name
+ * 
+ * @param    string $file filename with path of the import file
+ * @return   mixed: array with Bank Identification Data or FALSE in case of any error
+ * @access   private
+ */
+function direct_debit_dta_import_german_bank_identification_numbers($file) {
+    if (!$fp = @fopen($file, 'r')) {
+        drupal_set_message(t('Could not open uploaded file.'), 'error');
+        return FALSE;
+    }
+
+    $line_count = 0;
+    while (!feof($fp)) {
+        $line = fgets($fp, 200); // at the moment the bundesbank file has 169 characters for each line
+        $line_count++;
+
+        // test if data is utf-8
+        if (!drupal_validate_utf8($line)) {
+            $line = utf8_encode(trim($line));
+        }
+
+        if (empty($line)) {
+            continue; // read next line if line is empty
+        }
+
+        // flag 1 means bank has bank identification number otherwise we do not want to import
+        if (substr($line, 8, 1) == '1') {
+
+            $bank_name = trim(substr($line, 9, 58));
+            $bank_identification_number = substr($line, 0, 8);
+//            $values = '';
+            if (preg_match('/^\d{8}$/', $bank_identification_number) and preg_match('/\w{2,}/i', $bank_name)) {
+                $values .= (empty($values) ? '' : ', ');
+                $values .= "('" . trim($bank_identification_number) . "', '" . trim($bank_name) . "')";
+            } else {
+                drupal_set_message(t('Could not import Bank Identification Numbers because the uploaded file has an error in line @line.', array('@line' => $line_count)));
+                return FALSE;
+            }
+        }
+    }
+
+    // empty table
+    $result = db_query("TRUNCATE TABLE {direct_debit_bank_identification_numbers}");
+    if (!$result) {
+        watchdog('direct debit', 'An Error occurred while deleting data from the table <em>direct_debit_bank_identification_numbers</em>. The bank identification numbers may be incomplete.', array('@file' => $file), WATCHDOG_ERROR);
+        drupal_set_message(t('An Error occurred while importing file data into the database. The bank identification numbers may be incomplete. You need to import the data again or contact the site administrator.'));
+        return FALSE;
+    }
+
+    // insert new data into table
+    $result = db_query("INSERT INTO {direct_debit_bank_identification_numbers} (bank_identification_number, bank_name) VALUES " . $values);
+    if (!$result) {
+        watchdog('direct debit', 'An Error occurred while importing file @file data into the database. The bank identification numbers may be incomplete.', array('@file' => $file), WATCHDOG_ERROR);
+        drupal_set_message(t('An Error occurred while importing file data into the database. The bank identification numbers may be incomplete. You need to import the data again or contact the site administrator.'));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**
+ * Count the pending contributions
+ *
+ * @return mixed: (int) count of contributions with transaction status == pending; (boolean) FALSE in case of error
+ */
+function direct_debit_admin_count_pending_contributions() {
+    // contribution_status_id 2 == pending
+    return db_query("SELECT COUNT(*) FROM direct_debit WHERE contribution_status_id = 2")->fetchField();
+}
+
+/**
+ * Describes fields that are interesting for the direct debit (detailed) overview
+ *
+ * @param boolean $extendet: FALSE, if we only want fields for overview; TRUE for fields in detailed view
+ * @return array which contains database names of fields and their names
+ */
+function direct_debit_admin_data_fields($arg = '') {
+    // fields of interest
+    $data_fields = array(
+        'trxn_id' => t('ID'),
+        'receive_date' => t('Received on'), // pending
+        'account_holder' => t('Account Holder'),
+        'amount' => t('Amount'),
+        'currency_id' => t('Currency'),
+        'bank_account_number' => t('BAN'),
+        'bank_identification_number' => t('BIN'),
+        'bank_name' => t('Bank Name'),
+        'contribution_status_id' => t('Status'),
+    );
+
+    if ('details' == $arg) {
+        $extension = array(
+            //'invoice_id'                => t(''),
+            'organization_name' => t('Organization'),
+            'first_name' => t('First Name'),
+            'last_name' => t('Last Name'),
+            'street' => t('Street'),
+            'postal_code' => t('Post Code'),
+            'city' => t('City'),
+            'state_province' => t('State / Province'),
+            'country' => t('Country'),
+            'ip_address' => t('IP address'),
+            'email' => t('Email address'),
+            'contribution_type' => t('Contribution Type'),
+            'contribution_page_id' => t('Contribution Page ID'),
+            'contribution_description' => t('Description'),
+            'confirmation_date' => t('Confirmed on'), // completed
+            'cancel_date' => t('Canceled on'), // canceled
+            'failed_date' => t('Failed on'), // failed
+            'in_progress_date' => t('Created DTA on'), // in progress
+            'confirmation_by_user' => t('user'), // User who set status to completed
+            'cancel_by_user' => t('user'), // User who set status to canceled
+            'failed_by_user' => t('user'), // User who set status to failed
+            'in_progress_by_user' => t('user'), // User who set status to in progress
+        );
+        $data_fields = array_merge($data_fields, $extension);
+    }
+    return $data_fields;
+}
+
+/**
+ * Build the detailed direct debit management view
+ *
+ * @param string $trxn_id 
+ * @return void
+ */
+function direct_debit_admin_details($trxn_id) {
+    $data_fields = direct_debit_admin_data_fields('details');
+
+    foreach ($data_fields as $key => $field) {
+        $str_data_fields .= ', ' . $key;
+    }
+
+    $str_data_fields = ltrim($str_data_fields, ', ');
+
+//    $result = db_fetch_array(db_query("SELECT " . $str_data_fields . " FROM {direct_debit} WHERE trxn_id = '%s'", $trxn_id));
+    $result = db_query("SELECT " . $str_data_fields . " FROM {direct_debit} WHERE trxn_id = ':trxn_id'", array(':trxn_id' => $trxn_id))->fetchAssoc();
+
+    if (empty($result)) {
+        return t('Could not find a contribution with transaction id @trxn_id.', array('@trxn_id' => $trxn_id));
+    }
+
+    // get the names for country and state_province from iso code  
+    $result['state_province'] = direct_debit_get_country_state_province_name($result['country'], $result['state_province']);
+    $result['country'] = direct_debit_get_country_state_province_name($result['country']);
+
+    $vars = array();
+    foreach ($data_fields as $key => $name) {
+
+        if ('receive_date' == $key) {
+            // receive_date don't have a user who set this state (this was set by direct_debit_pp_do_payment)
+            $result[$key] = format_date($result[$key], 'small');
+            // add value to vars array for template
+            $vars[$key] = array('value' => check_plain($result[$key]), 'name' => $name);
+        } else if ('confirmation_date' == $key
+                || 'cancel_date' == $key
+                || 'failed_date' == $key
+                || 'in_progress_date' == $key) {
+
+            if (empty($result[$key])) {
+                // if the status corresponding to this date was never set 
+                // (the date is 0) we don't want the date to appear in the form 
+                unset($result[$key]);
+                continue;
+            }
+            // otherwise it should show up with the user
+            $user_key = str_replace('_date', '_by_user', $key);
+            $result[$key] = format_date($result[$key], 'small') . ' by ' . $data_fields[$user_key] . ': ' . l(direct_debit_get_username($result[$user_key]), 'user/' . $result[$user_key]);
+
+            // add value to vars array for template
+            $vars[$key] = array('value' => check_markup($result[$key]), 'name' => $name);
+        } else if ('contribution_status_id' == $key) {
+            $result[$key] = direct_debit_get_contribution_status($result[$key], TRUE, TRUE);
+            // add value to vars array for template
+            $vars[$key] = array('value' => check_plain($result[$key]), 'name' => $name);
+        } else if ('confirmation_by_user' != $key
+                && 'cancel_by_user' != $key
+                && 'failed_by_user' != $key
+                && 'in_progress_by_user' != $key
+                && 'billing_type' != $key) {
+            // we don't want to proceed the user fields ... but all the others that were not added to $vars in the cases before
+            // add value to vars array for template
+            $vars[$key] = array('value' => check_plain($result[$key]), 'name' => $name);
+        }
+    }
+    // add the receipt link to the vars array
+    $vars['billing']['name'] = t('Billing');
+    $vars['billing']['value'] = l(t('Download receipt'), 'direct_debit/receipt/' . $trxn_id, array('attributes' => array('target' => 'blank')));
+
+    $output = theme('direct_debit_admin_details', $vars);
+
+    return $output;
+}
+
+/**
+ * Get the user name by given uid
+ *
+ * @param int $uid user id to look for
+ * @return user name
+ */
+function direct_debit_get_username($uid) {
+    global $user;
+
+    if ($uid == $user->uid) {
+        return $user->name;
+    }
+
+//    $name = db_result(db_query("SELECT name FROM {users} WHERE uid = %d", $uid));
+    $name = db_query("SELECT name FROM {users} WHERE uid = :d", array(':uid' => $uid))->fetchField();
+
+    if (!$name) {
+        return t('unknown user');
+    }
+
+    return $name;
+}
+
+/**
+ * Displays contribution details in table
+ *
+ * @ingroup themeable
+ * @param string $vars 
+ * @return void
+ */
+function theme_direct_debit_admin_details($vars) {
+    $data_fields = direct_debit_admin_data_fields('details');
+    // amount and currency_id should appear in one column
+    $vars['amount']['value'] .= ' ' . $vars['currency_id']['value'];
+    unset($vars['currency_id']);
+
+
+    $rows = array();
+    foreach ($vars as $key => $data) {
+        $row = array();
+        $row[0] = $data['name'];
+        $row[1] = $data['value'];
+        $rows[] = $row;
+    }
+
+    $output .= theme('table', NULL, $rows);
+
+    //$row['receive_date'] = format_date($row['receive_date'], 'small');
+
+    return $output;
+}
+
+/**
+ * Build receipt
+ *
+ * @param string $trxn_id 
+ * @return void
+ */
+function direct_debit_admin_receipt($trxn_id) {
+    global $language;
+
+    // get contribution data
+//    $data = db_fetch_array(db_query("SELECT organization_name, first_name, last_name, amount, currency_id, receive_date, street, postal_code, city
+//                                   FROM {direct_debit}
+//                                   WHERE trxn_id = '%s'", $trxn_id));
+    $data = db_query("SELECT organization_name, first_name, last_name, amount, currency_id, receive_date, street, postal_code, city
+                                   FROM {direct_debit}
+                                   WHERE trxn_id = ':trxn_id'", array(':trxn_id' => $trxn_id))->fetchAssoc();
+
+    if (empty($data)) {
+        return t('Could not find a contribution with transaction id @trxn_id.', array('@trxn_id' => $trxn_id));
+    }
+
+    // prepare variables for template
+    $vars = array();
+
+    drupal_add_css(drupal_get_path('module', 'direct_debit') . '/direct_debit.css');
+
+    $vars['html_head'] = drupal_get_html_head() . drupal_get_css() . drupal_get_js();
+
+
+
+    $vars['language'] = $language;
+    $vars['header'] = str_replace("\n", "<br />", check_plain(variable_get('direct_debit_admin_receipt_header', '')));
+    $vars['title'] = check_plain(variable_get('direct_debit_admin_receipt_title', ''));
+    $vars['footer'] = str_replace("\n", "<br />", check_plain(variable_get('direct_debit_admin_receipt_footer', '')));
+
+    $vars['issuer']['description'] = t('Name and Address of the issuer:');
+    $vars['issuer']['content']['name'] = check_plain(variable_get('direct_debit_admin_issuer_name', ''));
+    $vars['issuer']['content']['street'] = check_plain(variable_get('direct_debit_admin_issuer_street', ''));
+    $vars['issuer']['content']['city'] = check_plain(variable_get('direct_debit_admin_issuer_post_code', '') . ' ' . variable_get('direct_debit_admin_issuer_city', ''));
+
+    $vars['contributor']['description'] = t('Name and Address of the contributor:');
+    $vars['contributor']['content']['organization_name'] = $data['organization_name'];
+    $vars['contributor']['content']['name'] = $data['first_name'] . ' ' . $data['last_name'];
+    $vars['contributor']['content']['street'] = $data['street'];
+    $vars['contributor']['content']['city'] = $data['postal_code'] . ' ' . $data['city'];
+
+    $vars['amount_numeric']['description'] = t('Numeric value of contribution:');
+    $vars['amount_numeric']['content'] = $data['amount'] . ' ' . $data['currency_id'];
+    // $vars['amount_verbalized']['description']  = t('Numeric value of contribution');
+    // $vars['amount_verbalized']['content']
+    $vars['date']['description'] = t('Date of contribution:');
+
+    $vars['date']['content'] = format_date($data['receive_date'], 'small');
+
+    // create output by using template
+    $output = theme('direct_debit_admin_receipt', $vars);
+
+    // build file headers
+    $headers = array();
+
+
+    $headers[] = 'Content-Type: text/html; charset=utf-8';
+
+    $headers[] = 'Content-Length: ' . strlen($output);
+
+    $str_file_name = 'receipt-' . $trxn_id . '.html';
+    $headers[] = 'Content-disposition: inline; filename="' . $str_file_name . '"';
+
+    if (headers_sent()) {
+        drupal_set_message(t("Can't send file because of an internal error (Some data has already been send to the Web Browser). Please contact the site administrator."), 'error');
+        return FALSE;
+    }
+
+    direct_debit_download_send($output, $headers);
+
+    return;
+}
+
+function direct_debit_admin_preview_mail() {
+    // create output by using template
+    $output = direct_debit_admin_send_confirmation_mail('preview');
+
+    // build file headers
+    $headers = array();
+
+
+    $headers[] = 'Content-Type: text/plain; charset=utf-8';
+
+    $headers[] = 'Content-Length: ' . strlen($output);
+
+    $str_file_name = 'preview_mail.txt';
+
+    $headers[] = 'Content-disposition: inline; filename="' . $str_file_name . '"';
+
+    if (headers_sent()) {
+        drupal_set_message(t("Can't send file because of an internal error (Some data has already been send to the Web Browser). Please contact the site administrator."), 'error');
+        return FALSE;
+    }
+
+    direct_debit_download_send($output, $headers);
+}
+
+/**
+ * Show dta file overview 
+ *
+ * On the top of this page we have the actual download (if dta_id is provided)
+ * Under this overview we have the dta archive with a pager
+ * 
+ * @param int $dta_id id of the 
+ * @return void
+ */
+function direct_debit_dta_overview($dta_file_id = NULL) {
+    if ($dta_file_id) {
+        // create link for actual download
+        // create dta files overview
+        $row = db_query("SELECT DISTINCT in_progress_date, dta_file_position FROM direct_debit WHERE dta_file_id = $dta_file_id ")->fetchAssoc();
+//        echo time().'<br>';
+//echo date('y-m-d','12356497'); exit;
+        $download_link = l(direct_debit_dta_file_name($row['in_progress_date'], $row['dta_file_position']), 'direct_debit/dta/' . $dta_file_id . '/download');
+    }
+
+    // sortable table header
+    $header = array();
+
+    $header[] = array(
+        'data' => t("DTA File"),
+        'field' => 'dta_file_id',
+        'sort' => 'desc',
+    );
+    $header[] = array(
+        'data' => t("Date"),
+        'field' => 'in_progress_date',
+    );
+    $header[] = array(
+        'data' => t("User"),
+        'field' => 'name',
+    );
+//
+//    $header = array(
+//        array('data' => 'DTA File', 'field' => 'dta_file_id', 'sort' => 'desc'), // FIRST column
+//        array('data' => 'Date', 'field' => 'in_progress_date'), // SECOND column
+//        array('data' => 'User.', 'field' => 'name')  // THIRD column
+//    );
+    // create dta files overview
+    //    $result = db_query("SELECT DISTINCT d.dta_file_id, d.dta_file_position, d.in_progress_date, d.in_progress_by_user, u.name FROM {direct_debit} d INNER JOIN {users} u on d.in_progress_by_user = u.uid WHERE dta_file_id > 0 ")->extend('TableSort');
+    $query = db_select('direct_debit', 'd');
+    $query = $query->extend('TableSort');
+    $query = $query->orderByHeader($header);
+    $query->fields('d', array('dta_file_id', 'dta_file_position', 'in_progress_date', 'in_progress_by_user'));
+//    $query->fields('u', array('name'));
+//    $query->condition('dta_file_id', '0', '>');
+//    $query->join('users', 'u', 'd.in_progress_by_user = u.uid');
+    $result = $query->execute();
+
+    $rows = array();
+    $file_name = '';
+    while ($row = $result->fetchAssoc()) {
+        $file_name = direct_debit_dta_file_name($row['in_progress_date'], $row['dta_file_position']);
+
+        unset($row['dta_file_position']);
+
+        $row['dta_file_id'] = l($file_name, 'direct_debit/dta/' . $row['dta_file_id'] . '/download'); // format_date($row['in_progress_date'], 'custom', 'Y-m-d')
+        $row['in_progress_date'] = format_date($row['in_progress_date'], 'small');
+        $row['name'] = l($row['name'], 'user/' . $row['in_progress_by_user']);
+        unset($row['in_progress_by_user']);
+        $rows[] = $row;
+    }
+
+    $output .= theme('direct_debit_dta_overview', array(
+//        'archive' => array(
+        'download_link' => $download_link,
+        'header' => $header,
+        'rows' => $rows
+//        ),
+            ));
+//    $output .= theme('table', array(
+//        'download_link' => $download_link,
+//        'archive' => array(
+//            'header' => $header,
+//            'rows' => $rows,
+//        ),
+//            ));
+
+    return $output;
+}
+
+function theme_direct_debit_dta_overview($vars) {
+    drupal_add_js('misc/collapse.js');
+
+    $output = '<div class="dta_overview">';
+    $collapsed = '';
+    if (!empty($vars['download_link'])) {
+        $output .= '<fieldset class="download_link' . $collapsed . '">';
+        $output .= '<legend>' . t('Download the last created DTA file:') . '</legend>';
+        $output .= '<p>' . $vars['download_link'] . '</p>';
+        $output .= '</fieldset>';
+        $collapsed = ' collapsed';
+    }
+
+    if (empty($vars['rows'])) {
+        $vars['archive']['rows'][] = array(array('data' => t('No DTA file available.'), 'colspan' => '3'));
+    }
+
+    $output .= '<fieldset class="download_archive collapsible' . $collapsed . '">';
+    $output .= '<legend>' . t('DTA file archive') . '</legend>';
+    $output .= theme('table', $vars);
+    $output .= '</fieldset>';
+
+    $output .= '</div>';
+
+    return $output;
+}
+
+/**
+ * Create dta for all contributions with status pending
+ *
+ * @return mixed: dta_file_id if successful; otherwise FALSE
+ */
+function direct_debit_admin_create_dta_and_update_status() {
+    global $user;
+    // get the next dta_file_id
+//    $dta_file_id = 1 + db_result(db_query('SELECT MAX(dta_file_id) FROM {direct_debit}'));
+    $dta_file_id = 1 + db_query('SELECT MAX(dta_file_id) FROM direct_debit')->fetchField();
+
+    $now = time();
+    $today_start = mktime(0, 0, 0, date('m', $now), date('d', $now), date('Y', $now));
+    $today_end = mktime(24, 59, 59, date('m', $now), date('d', $now), date('Y', $now));
+
+    // get the number of dta's created on the same day
+//    $dta_file_position = 1 + db_result(db_query('SELECT COUNT(*) FROM {direct_debit} WHERE in_progress_date BETWEEN %d AND %d', $today_start, $today_end));
+    $dta_file_position = 1 + db_query('SELECT COUNT(*) FROM direct_debit WHERE in_progress_date BETWEEN :today_start AND :today_end', array(':today_start' => $today_start, ':today_end' => $today_end))->fetchField();
+
+    // get trxn_id for each contribution for which we are creating the dta
+//    $query = "SELECT trxn_id FROM {direct_debit} WHERE contribution_status_id = 2";
+    $query = "SELECT trxn_id FROM direct_debit WHERE contribution_status_id = 2";
+
+    $error = array();
+    $count = 0;
+    $query_result = db_query($query);
+    while ($trxn_id = db_query($query_result)->fetchField()) {
+        $result = direct_debit_pp_update_civicrm_status($trxn_id, 5, $now);
+
+        if (!$result) {
+            $error[] = $trxn_id;
+        }
+        $count++;
+    }
+
+    if (!empty($error)) {
+        // one or more civicrm update errors
+        drupal_set_message(t('The contribution status in CiviCRM was updated to status <em>@status</em> for only @count of @n contributions.', array('@count' => $count - count($error),
+                    '@n' => $count,
+                    '@status' => direct_debit_get_contribution_status(5),
+                )), 'error');
+    }
+
+    // update direct debit ... set contribution_status_id to in progress and dta_file_id to the "next ID"
+//    $result = db_query('UPDATE {direct_debit}
+//                      SET contribution_status_id = 5, dta_file_id = %d, in_progress_by_user = %d, in_progress_date = %d, dta_file_position = %d
+//                      WHERE contribution_status_id = 2', $dta_file_id, $user->uid, $now, $dta_file_position); // 2=pending, 5=in progress
+    $result = db_query('UPDATE direct_debit
+                      SET contribution_status_id = 5, dta_file_id = :dta_file_id, in_progress_by_user = :uid, in_progress_date = :in_progress_date, dta_file_position = :dta_file_position
+                      WHERE contribution_status_id = 2', array(':dta_file_id' => $dta_file_id, ':uid' => $user->uid, ':in_progress_date' => $now, 'dta_file_position' => $dta_file_position)); // 2=pending, 5=in progress
+    if (!$result) {
+        drupal_set_message(t('There occurred an error while updating the contribution status in the direct debit administration to status <em>@status</em>. Please inform the site administrator to avoid possible bookkeeping errors.', array('@status' => direct_debit_get_contribution_status(5),
+                )));
+        return FALSE;
+    }
+
+    // no update error
+    drupal_set_message(t('The contribution status in CiviCRM and direct debit administrator were successfully updated to status <em>@status</em> for all @n contributions.', array('@status' => direct_debit_get_contribution_status(5),
+                '@n' => $count,
+            )));
+
+    return $dta_file_id;
+}
+
+// tod adapt function:
+function direct_debit_dta_download_create($dta_file_id) {
+    // require once Pears's DTA.php
+    if (!direct_debit_admin_require_once_dta(TRUE)) {
+        drupal_set_message(t('Unable to create the DTA file. Please check the path to the file DTA.php in <a href="@dd_settings_url">Administer > Settings > Direct Debit</a>.', array('@dd_settings_url' => l(url('admin/settings/direct_debit')))), 'error', FALSE);
+        return FALSE;
+    }
+
+    // Initialize new DTA file. For more information about DTA see the dta docs example: example_debit.php.
+    $dta_file = new DTA(DTA_DEBIT);
+
+    $name = direct_debit_dta_make_valid_lines($dta_file, check_plain(variable_get('direct_debit_dta_name', '')), 2);
+
+    // Set file sender.
+    $sender = array(
+        "name" => strtoupper($name[0]), // Name. Max. 27 chars.
+        "bank_code" => check_plain(variable_get('direct_debit_dta_bank_identification_number', '')),
+        "account_number" => check_plain(variable_get('direct_debit_dta_bank_account_number', '')),
+            // ... additional_name If necessary, additional line for name (max. 27 chars).
+    );
+
+    if (!empty($name[1])) {
+        $sender['additional_name'] = $name[1];
+    }
+
+    // This is also the default sender for transactions ... therefore we have to set sender each time
+    if (!$dta_file->setAccountFileSender($sender)) {
+        drupal_set_message(t('Error while setting the DTA sender data. Please check the Direct Debit configuration or contact the site administrator.'), 'error');
+        return FALSE;
+    }
+
+    // select all contributions which corresponds to the given dta_file_id
+//    $query = 'SELECT trxn_id, dta_file_position, bank_identification_number, bank_account_number, 
+//                   account_holder, amount, contribution_page_id, contribution_description, in_progress_date
+//           FROM {direct_debit}
+//           WHERE dta_file_id = %d';
+    $query = 'SELECT trxn_id, dta_file_position, bank_identification_number, bank_account_number, 
+                   account_holder, amount, contribution_page_id, contribution_description, in_progress_date
+           FROM direct_debit
+           WHERE dta_file_id = :dta_file_id';
+
+    $result = db_query($query, array(':dta_file_id' => $dta_file_id));
+
+    $dta_file_position = '';
+    $in_progress_date = '';
+//    while ($row = db_fetch_array($result)) {
+    while ($row = $result->fetchAssoc()) {
+
+        $name = direct_debit_dta_make_valid_lines($dta_file, $row['account_holder'], 2);
+
+        $receiver = array(
+            "name" => strtoupper($name[0]), // Name of account owner. Max. 27.
+            "bank_code" => $row['bank_identification_number'], // Bank code.
+            "account_number" => $row['bank_account_number'], // Account number.
+        );
+
+        if (!empty($name[1])) {
+            $receiver['additional_name'] = strtoupper($name[1]);
+        }
+
+
+        // Description of the transaction purposes (german: "Verwendungszweck"). Up to 15 lines (maximally 27 chars each)
+        $purposes = direct_debit_dta_make_valid_lines($dta_file, 'NR. ' . $row['trxn_id'], 2);
+
+        $contribution_description = direct_debit_dta_make_valid_lines($dta_file, $row['contribution_description'], 2);
+        // Push $contribution_description (one or more elements) onto the end of array $purposes
+        $purposes = array_merge($purposes, $contribution_description);
+
+        // Reference Text
+        $reference = direct_debit_dta_make_valid_lines($dta_file, check_plain(variable_get('direct_debit_dta_reference_text', ''), 2));
+        // Push $reference (zero, one or more elements) onto the end of array $purposes
+        $purposes = array_merge($purposes, $reference);
+
+        // Amount of money in this exchange. Currency: EUR
+        $amount = $row['amount'];
+
+        if (!empty($row['dta_file_position'])) {
+            $dta_file_position = $row['dta_file_position'];
+        }
+
+        $in_progress_date = $row['in_progress_date'];
+
+        // Add contribution data to dta
+        if (!$dta_file->addExchange($receiver, $amount, $purposes)) {
+            drupal_set_message(t('Error with some invalid debit data. The DTA file could not be created. Please check the direct debit configuration or contact the site administrator.'), 'error');
+            return FALSE;
+        }
+    }
+
+    $output = $dta_file->getFileContent();
+
+    if (empty($output)) {
+        drupal_set_message(t('Unknown Error occurred. The DTA file could not be created. Please check the direct debit configuration or contact the site administrator.'), 'error');
+        return FALSE;
+    }
+
+    $file_name = direct_debit_dta_file_name($in_progress_date, $dta_file_position);
+
+    $headers = array();
+
+    if (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
+        $headers[] = 'Content-Type: application/force-download';
+    } else {
+        $headers[] = 'Content-Type: application/octet-stream';
+    }
+
+    $headers[] = 'Content-Length: ' . strlen($output);
+    $headers[] = 'Content-disposition: attachment; filename="' . $file_name . '"';
+
+    if (headers_sent()) {
+        drupal_set_message(t("Can't send file because of an internal error (Some data has already been send to the Web Browser). Please contact the site administrator."), 'error');
+        return FALSE;
+    }
+
+    // send the file to client end exit
+    direct_debit_download_send($output, $headers);
+}
+
+/**
+ * Create the dta file name
+ *
+ * @param string $date 
+ * @param string $position 
+ * @return void
+ */
+function direct_debit_dta_file_name($date, $position) {
+    $file_name = check_plain(variable_get('direct_debit_dta_file_prefix', ''));
+    $file_name .= '_' . format_date($date, 'custom', 'Y-m-d');
+    $file_name .= ($position > 0 ? '_' . $position : '');
+    $file_name .= '.dta';
+    return $file_name;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function direct_debit_block($op = 'list', $delta = 0, $edit = array()) {
+    if (!user_access('access direct debit')) {
+        return;
+    }
+    switch ($op) {
+        case 'list':
+            $blocks[0] = array(
+                'info' => t('Number of pending transactions.'),
+            );
+            // // A block can provide default settings. In this case we'll enable the 
+            // // block and make it visible only on the 'node/*' pages. 
+            // $blocks[1] = array(
+            //   'info'       => t('Example: empty block'),
+            //   'status'     => TRUE,
+            //   'weight'     => 0,
+            //   'visibility' => 1,
+            //   'pages'      => 'node/*',
+            // );
+            return $blocks;
+        // case 'configure':
+        //   $form = array();
+        //   return $form;
+        // case 'save':
+        //   // If $op is "save", we need to save settings from the configuration form.
+        //   // Since the first block is the only one that allows configuration, we
+        //   // need to check $delta to make sure we only save it.
+        //   if ($delta == 0) {
+        //     // Have Drupal save the string to the database.
+        //     variable_set('block_example_string', $edit['block_example_string']);
+        //   }
+        //   return;
+        case 'view': default:
+            switch ($delta) {
+                case 0:
+                    // The subject is displayed at the top of the block. Note that it
+                    // should be passed through t() for translation.
+                    $block['subject'] = t('Direct Debit Management');
+                    $block['content'] = direct_debit_block_content();
+                    break;
+            }
+            return $block;
+    }
+}
+
+/**
+ * Provide the content for the direct debit block
+ *
+ * @return string $output: content of the block
+ */
+function direct_debit_block_content() {
+    $count = direct_debit_admin_count_pending_contributions();
+
+    $output = theme('direct_debit_block_content', array('count' => $count));
+
+    return $output;
+}
+
+/**
+ * Theme the direct debit block output
+ *
+ * @ingroup themeable
+ * @return string $output themed output
+ */
+function theme_direct_debit_block_content($vars) {
+    $output = '<div class="direct_debit_count">' . format_plural($vars['count'], 'There is 1 pending contribution.', 'There are @count pending contributions.', array()) . '</div>';
+    $output .='<div class="direct_debit_link">' . l(t('Direct Debit Management'), 'direct_debit') . '</div>';
+
+    return $output;
+}
+
+/**
+ * Updates the contribution_status_id in the direct debit table.
+ *
+ * @param int $status contribution_status_id
+ * @param array $checked_tx array of trxn_id's
+ * @return int count of affected rows
+ */
+function direct_debit_admin_update_status($status, $checked_tx) {
+    global $user;
+    $date_now = time();
+
+    if (!direct_debit_get_contribution_status($status, FALSE, FALSE)) {
+        drupal_set_message(t('Unknown update status.'));
+        return 0;
+    }
+
+    // build the common query parts, which are equal for all trxn_id
+    $query = "UPDATE {direct_debit} SET contribution_status_id = %d";
+    $query_args = array($status);
+    $query_where = " WHERE trxn_id = '%s' ";
+    $query_where_args = array();
+
+    // update status only for status_id 1, 3, 4  ... for 5 it's done while creating the dta and 2 never
+    switch ($status) {
+        case 1: // complete
+            $query .= " , confirmation_date = %d, confirmation_by_user = %d";
+            // we only want so complete pending transactions
+            $query_where .= " AND contribution_status_id = 5";
+            $query_args[] = $date_now;
+            $query_args[] = $user->uid;
+            break;
+        case 3: // cancel
+            $query .= " , cancel_date = %d, cancel_by_user = %d";
+            $query_args[] = $date_now;
+            $query_args[] = $user->uid;
+            break;
+        case 4: // failed
+            $query .= " , failed_date = %d, failed_by_user = %d";
+            $query_args[] = $date_now;
+            $query_args[] = $user->uid;
+            break;
+        case 5: // in_progress
+        case 2: // pending
+            // we never want to set state to in_progress or pending 
+            return 0;
+    }
+
+    $success = $error = array();
+    foreach ($checked_tx as $key => $trxn_id) {
+        // build the dynamic query parts, which are depending to the trxn_id
+        $query_where_args = array($trxn_id);
+
+        // run update query and count affected rows
+        $query_args_merged = array_merge($query_args, $query_where_args);
+        $result = db_affected_rows(db_query($query . $query_where, $query_args_merged));
+
+        if (!$result) {
+            $error['direct_debit'][] = $trxn_id;
+            continue;
+        }
+
+        // run civicrm status update
+        $result = direct_debit_pp_update_civicrm_status($trxn_id, $status, $date_now);
+
+        // only invoke civicrm update only if local update was successful
+        if (!$result) {
+            $error['civicrm'][] = $trxn_id;
+            continue;
+        }
+
+        // send mail for each successful completed contribution
+        if (1 == $status) {
+            $result = direct_debit_admin_send_confirmation_mail($trxn_id);
+
+            if (!$result) {
+                $error['mail'][] = $trxn_id;
+                continue;
+            }
+        }
+
+        // no errors
+        $success[] = $trxn_id;
+    } // end foreach
+
+    return array('success' => $success, 'errors' => $error);
+}
+
+/**
+ * Set the year range: from the actual year to the next 3 years.
+ *
+ * @param array $form_element 
+ * @return array $form_element
+ */
+function direct_debit_update_expiration_set_year_range($form_element) {
+    $current_year = date('Y');
+    $form_element['year']['#options'] = drupal_map_assoc(range($current_year, $current_year + 3));
+    return $form_element;
+}
+
+/**
+ * Get the country name corresponding to a given country iso code
+ * 
+ * If the second argument gets passed the function will return the state/province name otherwise the
+ * country name will be returned.
+ * 
+ * @param string $country_code ISO Country Code
+ * @param string $state_province_code state/province code if we want the state/province name 
+ * @return string $name name of country (state_province_code) or if not found code or state_province name
+ */
+function direct_debit_get_country_state_province_name($country_code, $state_province_code = '') {
+    $country = array(
+        'DE' => array(
+            'name' => t('Germany'),
+            'state_province' => array(
+                'BB' => t('Brandenburg'),
+                'BR' => t('Berlin'),
+                'BW' => t('Baden-Württemberg'),
+                'BY' => t('Bavaria'),
+                'HB' => t('Bremen'),
+                'HE' => t('Hesse'),
+                'HH' => t('Hamburg'),
+                'NI' => t('Lower Saxony'),
+                'MV' => t('Mecklenburg-Western Pomerania'),
+                'NW' => t('North Rhine-Westphalia'),
+                'RP' => t('Rhineland-Palatinate'),
+                'SH' => t('Schleswig-Holstein'),
+                'SL' => t('Saarland'),
+                'SN' => t('Saxony'),
+                'ST' => t('Saxony-Anhalt'),
+                'TH' => t('Thuringia'),
+            ),
+        ),
+    );
+
+    if (!array_key_exists($country_code, $country)) {
+        if (!empty($state_province_code)) {
+            return $state_province_code;
+        }
+
+        return $country_code;
+    }
+
+    if (!array_key_exists($state_province_code, $country[$country_code]['state_province'])) {
+        return $country[$country_code]['name'];
+    }
+
+    return $country[$country_code]['state_province'][$state_province_code];
+}
+
+function direct_debit_admin_send_confirmation_mail($trxn_id) {
+    global $language;
+
+    $data = array();
+
+    if ('preview' != $trxn_id) {
+//        $data = db_fetch_array(db_query("SELECT organization_name, first_name, last_name, amount, currency_id, 
+//                                      receive_date, street, postal_code, city, email
+//                                     FROM {direct_debit}
+//                                     WHERE trxn_id = '%s'", $trxn_id));
+        $data = db_query("SELECT organization_name, first_name, last_name, amount, currency_id, 
+                                      receive_date, street, postal_code, city, email
+                                     FROM {direct_debit}
+                                     WHERE trxn_id = ':trxn_id'", array(':trxn_id' => $trxn_id))->fetchAssoc();
+    } else {
+        $data = array(
+            'organization_name' => t('[Organization name]'),
+            'first_name' => t('[First name]'),
+            'last_name' => t('[Last name]'),
+            'street' => t('[Street Address]'),
+            'postal_code' => t('[Postal Code]'),
+            'city' => t('[City]'),
+            'amount' => t('[Amount]'),
+            'currency_id' => 'EUR',
+            'receive_date' => time(),
+        );
+    }
+
+    if (!$data) {
+        drupal_set_message(t('Could not send mail for contribution with Transaction ID %trxn_id.'), array('%trxn_id' => $trxn_id), 'error');
+        return;
+    }
+
+    if (empty($data['email']) && 'preview' != $trxn_id) {
+        drupal_set_message(t('Could not send mail for contribution with Transaction ID %trxn_id, because the email is missing.'), array('%trxn_id' => $trxn_id), 'error');
+        return;
+    }
+
+    $vars['subject'] = check_plain(variable_get('direct_debit_admin_mail_subject', ''));
+
+    $vars['header'] = check_plain(variable_get('direct_debit_admin_mail_header', ''));
+    $vars['footer'] = check_plain(variable_get('direct_debit_admin_mail_footer', ''));
+
+    $vars['issuer']['description'] = t('Name and Address of the issuer:');
+    $vars['issuer']['content']['name'] = check_plain(variable_get('direct_debit_admin_issuer_name', ''));
+    $vars['issuer']['content']['street'] = check_plain(variable_get('direct_debit_admin_issuer_street', ''));
+
+
+    $vars['contributor']['description'] = t('Name and Address of the contributor:');
+    $vars['contributor']['content']['organization_name'] = $data['organization_name'];
+    $vars['contributor']['content']['name'] = $data['first_name'] . ' ' . $data['last_name'];
+    $vars['contributor']['content']['street'] = $data['street'];
+    $vars['contributor']['content']['city'] = $data['postal_code'] . ' ' . $data['city'];
+
+    $vars['amount_numeric']['description'] = t('Numeric value of contribution:');
+    $vars['amount_numeric']['content'] = $data['amount'] . ' ' . $data['currency_id'];
+    $vars['date']['description'] = t('Date of contribution:');
+    $vars['date']['content'] = format_date($data['receive_date'], 'small');
+
+    $to = $data['email'];
+    $from = check_plain(variable_get('direct_debit_admin_mail_from', NULL));
+
+    $message = drupal_mail('direct_debit', 'confirmation', $to, $language, $vars, $from, FALSE);
+
+    // in preview mode just return the mail body
+    if ('preview' == $trxn_id) {
+        return $message['body'];
+    }
+
+    $result = drupal_mail_send($message);
+    // Log errors
+    if (!$result) {
+        watchdog('mail', 'Error sending e-mail (from %from to %to).', array('%from' => $from, '%to' => $to), WATCHDOG_ERROR);
+        drupal_set_message(t('Could not send mail for contribution with Transaction ID %trxn_id.', array('%trxn_id' => $trxn_id)), 'error');
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function direct_debit_mail($key, &$message, $vars) {
+    switch ($key) {
+        case 'confirmation':
+            $message['subject'] = $vars['subject'];
+            // create output by using template
+            $message['body'] = theme('direct_debit_admin_mail', $vars);
+            break;
+    }
+}
+
+/**
+ * Update the contribution status in CiviCRM
+ *
+ * @param string $trxn_id transaction ID (todo testing: DD932E)
+ * @param int $contribution_status_id  contribution status ID
+ * @param int $date unix timestap
+ * @return boolean TRUE if update was successful, otherwise FALSE
+ */
+function direct_debit_pp_update_civicrm_status($trxn_id, $contribution_status_id, $date = '') {
+    if (!module_exists('civicrm')) {
+        return FALSE;
+    }
+
+    if (empty($date)) {
+        $date = time();
+    }
+
+    // get the unique invoice_id to identify the contribution
+//    $result = db_fetch_array(db_query("SELECT invoice_id, amount FROM {direct_debit} WHERE trxn_id = '%s'", $trxn_id));
+    $result = db_query("SELECT invoice_id, amount FROM {direct_debit} WHERE trxn_id = ':trxn_id'", array('trxn_id' => $trxn_id))->fetchAssoc();
+
+    if (empty($result)) {
+        return FALSE;
+    }
+
+    $params = array(
+        'trxn_id' => $trxn_id,
+        'invoice_id' => $result['invoice_id'],
+        'net_amount' => $result['amount'],
+        'contribution_status_id' => $contribution_status_id,
+        'fee_amount' => 0,
+        'receipt_date' => $date,
+        'trxn_type' => 'Debit',
+    );
+
+    // initialize CiviCRM
+    civicrm_initialize(TRUE);
+    require_once 'CRM/Core/Payment/DrupalDirectDebit.php';
+
+    $result = CRM_Core_Payment_DrupalDirectDebit::changeContributionState($params);
+
+    return $result;
+}

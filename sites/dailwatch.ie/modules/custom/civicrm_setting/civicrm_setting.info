@@ -1,0 +1,7 @@
+name = civicrm custom settings
+description = Customise civicrm to meet the requirements
+core = 7.x
+version = 7.x-1.x-dev
+package = Custom
+dependencies[] = civicrm
+files[] = civicrm_setting.module

@@ -1,0 +1,35 @@
+# Drupal Modul DIRECT DEBIT zur Bereitstellung eines Paymentgateways unter Drupal 6.x. 
+
+## Voraussetzung:
+
+Dieses Modul benutzt das PEAR Payment_DTA Paket. Entweder Sie installieren das Paket 
+unter Benutzung des PEAR Installationsprogramms oder Sie installieren es z.B. in Ihrem
+Verzeichnis sites/civi/files. 
+
+Downloaden Sie Payment_DTA hier: http://pear.php.net/package/Payment_DTA.
+
+## Installation
+
+* Modul direct_debit in das modules-Verzeichnis kopieren und anschließend aktivieren 
+* Modul unter /admin/settings/direct_debit konfigurieren.
+** Bankleitzahlen hochladen: Die Bankleitzahlen gibt es unter: 
+http://www.bundesbank.de/zahlungsverkehr/zahlungsverkehr_bankleitzahlen_download.php
+Da die Bankleitzahlen nur für etwa 3 Monate gültig sind müssen sie regelmäßig aktualisiert werden. 
+Es kann ein Datum eingestellt werden, dass sie an die Aktualisierung erinnert.
+** DTA, Zahlungsempfänger und Benachrichtigungen einstellen.
+* Bei Bedarf den Block "Anzahl der unbearbeiteten Lastschriften" unter /admin/build/block aktivieren.
+
+## Copyright
+
+Webkonzepte und Programmierung Bernhard Fürst und
+Lars Schröter <lars.schroeter@fuerstnet.de>
+http://fuerstnet.de
+
+## Lizenz
+
+Das vorliegende Programmsystem unterliegt der GNU GENERAL PUBLIC LICENSE Version 2, June 1991. 
+Siehe beigelegte Datei LICENSE.txt.
+
+## Weitere Informationen
+
+http://crmproject.de/node/19

@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * This hook is invoked when a CiviCRM form is submitted. If the module has
+ * injected any form elements, this hook should save the values in the database.
+ *
+ * @param string $formName
+ *   The name of the form.
+ * @param object $form
+ *   A reference to the form object.
+ *
+ * @see http://wiki.civicrm.org/confluence/display/CRMDOC33/CiviCRM+hook+specification#CiviCRMhookspecification-hookcivicrmpostProcess
+ */
+function goto_thankyou_civicrm_postProcess($formName, &$form) {
+    // if formName/FORM is equal to (Confirm Contribution) after submission of it goto Thank you page.
+    if ($formName == 'CRM_Contribute_Form_Contribution_Confirm') {
+        drupal_goto('node/1'); // node/1 reffer to the (Thankyou) page.
+    }
+}

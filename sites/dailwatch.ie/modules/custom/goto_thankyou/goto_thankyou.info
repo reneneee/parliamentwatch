@@ -1,0 +1,9 @@
+name = Goto Thankyou
+description = Redirects users to the THANK YOU page after successful contribution.
+package = Custom
+core = 7.x
+version = 7.x-1.x-dev
+dependencies[] = civicrm
+dependencies[] = webform
+files[] = goto_thankyou.module
+

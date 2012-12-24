@@ -1,0 +1,382 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_schema().
+ * 
+ * We extended fields by name to use it i.e. for table headers
+ */
+function direct_debit_schema() {
+  $schema['direct_debit'] = array(
+    'fields' => array(
+      'did' => array(
+        'type' => 'serial', 
+        'not null' => TRUE,
+        'description' => t('Primary Key: Unique ID for direct debit.'),
+      ),
+      'trxn_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Key: Unique ID for transactions with the format: dd_xxxx_did. This Id is used as transaction id for civicrm'),
+      ),
+      'first_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('First name.'),
+      ),
+      'last_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Last name.'),
+      ),
+      'organization_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Organization name.'),
+      ),
+      'account_holder' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Account Holder.'),
+      ),
+      'bank_account_number' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Bank Account Number.'),
+      ),
+      'bank_identification_number' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Bank Identification Number.'),
+      ),
+      'bank_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Bank Name.'),
+      ),
+      'street' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Address: Street.'),
+      ),
+      'postal_code' => array(
+        'type' => 'varchar',
+        'length' => 60,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Address: Postal Code.'),
+      ),
+      'city' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Address: City.'),
+      ),
+      'state_province' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Address: State/Province.'),
+      ),
+      'country' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Address: Country.'),
+      ),
+      'email' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Email address."),
+      ),
+      'payment_action' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Payment action."),
+      ),
+      'contribution_page_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Contribution page identifier."),
+      ),
+      'contribution_description' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Contribution description."),
+      ),
+      'contribution_type' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Contribution type."),
+      ),
+      'amount' => array(
+        'type' => 'numeric',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'default' => 0,
+        'precision' => 10,
+        'scale' => 2,
+        'description' => t("Contribution amount."),
+      ),
+      'currency_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => 'EUR',
+        'description' => t("Currency Identifier."),
+      ),
+      'invoice_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Invoice Identifier."),
+      ),
+      'ip_address' => array(
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Contributors IP address."),
+      ),
+      'form_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Identifier of receipt, received from contribution form."),
+      ),
+      'hash' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t("Hash over the data received by direct_debit_do_payment."),
+      ),
+      'contribution_status_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t("Status ID of transaction."),
+      ),
+      'billing_type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t("Billing type 0 not wanted, 1 wanted"),
+      ),
+      'receive_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t('The Unix timestamp: pending.'),
+      ),
+      'cancel_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t('The Unix timestamp: canceled.'),
+      ),
+      'confirmation_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t('The Unix timestamp: completed.'),
+      ),
+      'in_progress_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t('The Unix timestamp: in progress.'),
+      ),
+      'failed_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t('The Unix timestamp: failed.'),
+      ),
+      'confirmation_by_user' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("User's {users}.uid - who confirmed the payment."),
+      ),
+      'cancel_by_user' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("User's {users}.uid - who canceled the payment."),
+      ),
+      'failed_by_user' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("User's {users}.uid - who set failed to the payment."),
+      ),
+      'in_progress_by_user' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("User's {users}.uid - who set payment to in progress."),
+      ),
+      'dta_file_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("Identifier for each DTA file - will be the first dta_id of the dataset."),    
+      ),
+      'dta_file_position' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => t("Counts dta files created on the same day."),    
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'trxn_id' => array('trxn_id'),
+    ),
+  );
+  
+  $schema['direct_debit_bank_identification_numbers'] = array(
+    'fields' => array(
+      'bid' => array(
+        'type' => 'serial', 
+        'not null' => TRUE,
+        'description' => t('Primary Key: Unique ID.'),
+      ),
+      'bank_identification_number' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Bank Identification Number.'),
+      ),
+      'bank_name' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => t('Bank Name.'),
+      ),
+    ),
+    'primary key' => array('bid'),
+    'indexes' => array(
+      'bank_identification_number' => array('bank_identification_number'),
+    ),
+  );
+
+  return $schema;
+}
+
+// function direct_debit_update_1() {
+//   $schema['direct_debit_dta_file'] = array(
+//     'fields' => array(
+//       'dta_id' => array(
+//         'type' => 'int',
+//         'not null' => TRUE,
+//         'unsigned' => TRUE,
+//         'default' => 0,
+//         'description' => t('Unique id for each dataset'),
+//       ),
+// 
+//       'trxn_id' => array(
+//         'type' => 'varchar',
+//         'length' => 64,
+//         'not null' => TRUE,
+//         'default' => '',
+//         'description' => t('Foreign Key: transaction id (from direct debit)'),
+//       ),
+//     ),
+//     'primary key' => array('dta_id'),
+//   );
+//   $ret = array();
+//     db_create_table($ret, 'direct_debit_dta_file', $schema['direct_debit_dta_file']);
+//   return $ret;
+// }
+
+ /**
+ * Implementation of hook_install()
+ */
+function direct_debit_install() {
+//  drupal_install_schema('direct_debit');     
+}
+
+ /**
+ * Implementation of hook_install()
+ */
+function direct_debit_uninstall() {
+//  drupal_uninstall_schema('direct_debit');
+  variable_del('direct_debit_path_to_dta');
+  variable_del('direct_debit_name');
+  variable_del('direct_debit_dta_bank_identification_number');
+  variable_del('direct_debit_dta_bank_account_number');
+  variable_del('direct_debit_dta_file_path');
+  variable_del('direct_debit_dta_name');
+  variable_del('direct_debit_dta_reference_text');
+  variable_del('direct_debit_update_bank_identification_numbers_upload_path');
+  variable_del('direct_debit_update_expiration');
+  variable_del('direct_debit_update_notification');
+  variable_del('direct_debit_update_bank_identification_numbers_upload');
+  variable_del('direct_debit_admin_receipt_footer');
+  variable_del('direct_debit_admin_receipt_title');
+  variable_del('direct_debit_admin_receipt_header');
+  variable_del('direct_debit_admin_mail_footer');
+  variable_del('direct_debit_admin_mail_subject');
+  variable_del('direct_debit_admin_mail_header');
+  variable_del('direct_debit_admin_mail_from');
+  variable_del('direct_debit_admin_issuer_post_code');
+  variable_del('direct_debit_admin_issuer_city');
+  variable_del('direct_debit_admin_issuer_street');
+  variable_del('direct_debit_admin_issuer_name');
+  variable_del('direct_debit_dta_file_prefix');
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function direct_debit_disable() {
+
+}

@@ -1,0 +1,63 @@
+<?php
+
+/*
+ * This Form API provide the managment for councils.
+ */
+
+/**
+ * Implements hook_perm
+ */
+function manage_councils_perm() {
+    return array(
+        'administer councils' => array(
+            'title' => t('Administer Councils Management.'),
+        )
+    );
+}
+
+/**
+ * Implements hook_menu.
+ */
+function manage_councils_menu() {
+    $items['direct_debit/councils/all'] = array(
+        'title' => t('Manage Direct Debit'),
+        'page callback' => 'goto_direct_debit',
+        'type' => MENU_LOCAL_TASK,
+        'access callback' => TRUE,
+        'weight' => 1,
+    );
+
+    $items['direct_debit/councils/add'] = array(
+        'title' => t('Add Councils'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('manage_councils_form'),
+        'access callback' => TRUE,
+        'access arguments' => array('administer councils'),
+        'type' => MENU_LOCAL_TASK,
+        'file' => 'manage_councils.functions.inc',
+        'weight' => 2,
+    );
+
+    // Use AJAX framework commands outside of the #ajax form property.
+    $items['direct_debit/councils/manage'] = array(
+        'title' => t('Manage Coucils'),
+        'page callback' => 'drupal_get_form',
+        'type' => MENU_LOCAL_TASK,
+        'page arguments' => array('german_councils_list'),
+        'access callback' => TRUE,
+        'file' => 'manage_councils.functions.inc',
+        'weight' => 3,
+    );
+    // To delete council
+    $items['direct_debit/councils/delete'] = array(
+        'page callback' => 'council_delete',
+        'access callback' => TRUE,
+        'file' => 'manage_councils.functions.inc',
+        'weight' => 10,
+    );
+    return $items;
+}
+
+function goto_direct_debit() {
+    drupal_goto("direct_debit");
+}

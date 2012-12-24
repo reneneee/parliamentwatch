@@ -1,0 +1,8 @@
+Direct Debit Payment Processor 3.3.x-1.x, 2011-01-20
+----------------------
+- Update Payment Processor to work with CiviCRM 3.3.3
+- Change Payment Processor Version to highlight the requirement of CiviCRM 3.3.x
+
+Direct Debit Payment Processor 3.x-1.x, 2010-09-06
+----------------------
+- Added install.sh for automated installation.

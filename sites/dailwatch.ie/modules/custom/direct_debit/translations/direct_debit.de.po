@@ -1,0 +1,1012 @@
+# $Id$
+#
+# German translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  direct_debit.module: n/a
+#  direct_debit.install: n/a
+#  direct_debit.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-02-17 16:20+0100\n"
+"PO-Revision-Date: 2009-02-17 16:20+0100\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: German <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: direct_debit.module:170
+msgid "Update Bank Identification Numbers"
+msgstr "Aktualisierung der Bankleitzahlen"
+
+#: direct_debit.module:176
+msgid "Upload <em>PC-Text</em> file containing Bank Identification Numbers"
+msgstr "Laden Sie eine Datei mit Bankleitzahlen im <em>PC-Text</em>"
+
+#: direct_debit.module:178
+msgid "Upload a file containing Bank Identification Numbers to update the internal database with current valid numbers. This feature is tested with german BIN's only. You get the file containing german BIN's from: !link. Download the <em>PC-Text</em> format there."
+msgstr ""
+"Laden Sie eine Datei mit Bankleitzahlen um die interne Datenbank zu "
+"aktualisieren. Diese Funktion ist nur mit deutschen Bankleitzahlen "
+"getestet. Sie erhalten die Bankleitzahlen hier: !link. Wählen Sie "
+"dort das Format <em>PC-Text</em>."
+
+#: direct_debit.module:184
+msgid "Update notification"
+msgstr "Benachrichtigung über Aktualisierung"
+
+#: direct_debit.module:185
+msgid "A message will appear in the Direct Debit overview to remind you to update the Bank Identification Numbers."
+msgstr ""
+"Ein Hinweis wird in der Lastschriften-Übersicht eingeblendet, der Sie "
+"an eine Aktualisierung der Bankleitzahlen erinnert."
+
+#: direct_debit.module:201
+msgid "Date of expiration"
+msgstr "Ablaufdatum"
+
+#: direct_debit.module:208
+msgid "Start update"
+msgstr "Aktualisierung beginnen"
+
+#: direct_debit.module:226
+msgid "DTA Settings"
+msgstr "DTA Einstellungen"
+
+#: direct_debit.module:227
+msgid "Please note: DTA restricts strings to uppercase alphanumeric characters, spaces and . , & - / + * $ %. When using PEARs Payment_DTA package the input will be transformed automatically to DTA standard."
+msgstr ""
+"Hinweis: DTA schränkt Texte auf großgeschriebene alphanumerische "
+"Zeichen, Leerzeichen und . , & - / + * $ % ein. Wenn PEARs Payment_DTA "
+"Paket benutzt wird, wird die Eingabe automatisch in den DTA-Standard "
+"umgewandelt."
+
+#: direct_debit.module:231;232
+msgid "You must upload Bank Information Numbers above before being able to configure further settings."
+msgstr ""
+"Bevor Sie weitere Einstellungen bearbeiten können, müssen Sie "
+"Bankleitzahlen laden (siehe oben)."
+
+#: direct_debit.module:240
+msgid "Name of Account Holder"
+msgstr "Name des Kontoinhabers"
+
+#: direct_debit.module:244
+msgid "Name of the account holder, up to 27 uppercase alphanumeric characters, spaces or . , & - / + * $ %."
+msgstr ""
+"Der Name des Kontoinhabers. Bis zu 27 großgeschriebene "
+"alphanumerische Zeichen, Leerzeichen oder . , & - / + * $ %."
+
+#: direct_debit.module:249
+msgid "Bank Account Number"
+msgstr "Kontonummer"
+
+#: direct_debit.module:253
+msgid "The organizations bank account number, up to 10 digits"
+msgstr "Die Kontonummer Ihrer Organisation, bis zu 10 Ziffern"
+
+#: direct_debit.module:258
+msgid "Bank Identification Number"
+msgstr "Bankleitzahl"
+
+#: direct_debit.module:262
+msgid "Bank identification number of the bank account, up to 8 digits"
+msgstr "Die Bankleitzahl Ihrer Organisation, bis zu 8 Ziffern."
+
+#: direct_debit.module:267
+msgid "Custom Reference Text"
+msgstr "Verwendungszweck"
+
+#: direct_debit.module:271
+msgid "Custom reference text which is shown in the accountholders bill, up to 54 uppercase alphanumeric characters, spaces or . , & - / + * $ %."
+msgstr ""
+"Verwendungszweck, der im Kontoauszug des Kontoinhabers zu sehen ist. "
+"Bis zu 54 großgeschriebene alphanumerische Zeichen, Leerzeichen oder "
+". , & - / + * $ %."
+
+#: direct_debit.module:276
+msgid "Path to DTA.php"
+msgstr "Verzeichnispfad zur DTA.php"
+
+#: direct_debit.module:280
+msgid "This module uses the PEAR Payment_DTA package. Either your site administrator installs it using the PEAR install command or you are installing it e.g. in your <strong>@path</strong> directory. Download Payment_DTA here: !pear_link. The directory path containing <strong>DTA.php</strong> must be set here. Use a path relative to the Drupal root or enter an absolute file system path. Leave this field blank to use the PHP include_path (<strong>@include_path</strong>)."
+msgstr ""
+"Dieses Modul benutzt das PEAR Payment_DTA Paket. Entweder Ihr Site "
+"Administrator installiert das Paket unter Benutzung des PEAR "
+"Installationsprogramms oder Sie installieren es z.B. in Ihrem "
+"Verzeichnis <strong>@path</strong>. Downloaded Sie Payment_DTA hier: "
+"!pear_link. Das Verzeichnis, das die Datei <strong>DTA.php</strong> "
+"enthält, muß oben eingetragen werden. Verwenden Sie einen "
+"Verzeichnispfad, der relativ zum Drupal Root ist oder verwenden Sie "
+"einen absoluten Verzeichnispfad. Lassen Sie das Feld frei, um den PHP "
+"include_path zu benutzen (<strong>@include_path</strong>)."
+
+#: direct_debit.module:283
+msgid "contributions-"
+msgstr "lastschriften-"
+
+#: direct_debit.module:287
+msgid "Set DTA file prefix"
+msgstr "Prefix der DTA-Datei"
+
+#: direct_debit.module:291
+msgid "Modify the default prefix (<em>@default_prefix</em>). The DTA file name will look like this: <em>@filename</em>. It must only contain alphanumeric characters, underscores (_) or hyphens (-)."
+msgstr ""
+"Verändern Sie den Standardprefix (<em>@default_prefix</em>). Der "
+"DTA-Dateiname sieht folgendermaßen aus: <em>@filename</em>. Er darf "
+"nur alphanumerische Zeichen, Unterstriche (_) oder Bindestriche (-) "
+"enthalten."
+
+#: direct_debit.module:297
+msgid "Issuer Address"
+msgstr "Adresse des Ausstellers"
+
+#: direct_debit.module:298
+msgid "Issuer Address to be included in the Direct Debit receipt and confirmation mail."
+msgstr "Die Adresse des Ausstellers, die in der Spendenbescheinigung und der Bestätigungsemail verwendet wird."
+
+#: direct_debit.module:302
+msgid "Name"
+msgstr "Name"
+
+#: direct_debit.module:309;1635
+msgid "Street"
+msgstr "Straße"
+
+#: direct_debit.module:316
+msgid "Postal code"
+msgstr "Postleitzahl"
+
+#: direct_debit.module:323;1637
+msgid "City"
+msgstr "Ort"
+
+#: direct_debit.module:332
+msgid "Set receipt text data"
+msgstr "Text der Spendenbescheinigung"
+
+#: direct_debit.module:333
+msgid "Text data to be included in the Direct Debit receipt."
+msgstr "Text, der in der Spendenbescheinigung angezeigt wird."
+
+#: direct_debit.module:338
+msgid "Title"
+msgstr "Titel"
+
+#: direct_debit.module:348
+msgid "Header"
+msgstr "Kopfbereich"
+
+#: direct_debit.module:356
+msgid "Footer"
+msgstr "Fußzeile"
+
+#: direct_debit.module:366
+msgid "Set mail text data"
+msgstr "Text der Bestätigungs-E-Mail"
+
+#: direct_debit.module:367
+msgid "Text data to be included in the Direct Debit confirmation mail."
+msgstr "Text, der in der Bestätigungs-E-Mail angezeigt wird."
+
+#: direct_debit.module:372
+msgid "From"
+msgstr "Von"
+
+#: direct_debit.module:379
+msgid "Subject"
+msgstr "Betreff"
+
+#: direct_debit.module:388
+msgid "Body (first part)"
+msgstr "Inhalt (erster Teil)"
+
+#: direct_debit.module:395
+msgid "Body (second part)"
+msgstr "Inhalt (zweiter Teil)"
+
+#: direct_debit.module:404
+msgid "After submitting the form values you can see the <a href=\"@link\" target=\"blank\">mail preview</a>."
+msgstr "Nach dem Senden des Formulars können Sie sich eine <a href=\"@link\" target=\"blank\">Vorschau der E-Mail</a> anschauen."
+
+#: direct_debit.module:441;531
+msgid "An error occurred while submitting the form. Please check your input values and try again. If this error persists, please contact the site administrator."
+msgstr ""
+"Ein Fehler ist beim Senden des Formulars aufgetreten. Bitte prüfen "
+"Sie die Eingabewerte und probieren Sie es nocheinmal. Wenden Sie sich "
+"an Ihren Site Administrator, wenn der Fehler bestehen bleibt."
+
+#: direct_debit.module:452;535;561
+msgid "Reset to defaults"
+msgstr "Zurücksetzen"
+
+#: direct_debit.module:453;536
+msgid "The configuration options have been reset to their default values."
+msgstr "Die Einstellungen wurden auf ihre Standardwerte zurückgesetzt."
+
+#: direct_debit.module:456;542
+msgid "The configuration options have been saved."
+msgstr "Die Einstellungen wurden gespeichert."
+
+#: direct_debit.module:468;474
+msgid "Invalid Bank Identification Number."
+msgstr "Ungültige Bankleitzahl."
+
+#: direct_debit.module:482
+msgid "The DTA file prefix must contain not more than 100 alphanumeric characters, underscores (_) or hyphens (-)."
+msgstr ""
+"Der Prefix der DTA-Datei darf nicht mehr als 100 alphanumerische "
+"Zeichen, Unterstriche (_) oder Bindestriche (-) enthalten."
+
+#: direct_debit.module:486
+msgid "The file name prefix must have not more than 100 characters."
+msgstr ""
+"Der Prefix der Datei darf nicht mehr als 100 alphanumerische Zeichen "
+"lang sein."
+
+#: direct_debit.module:496;500;513
+msgid "Unable to load the file DTA.php. Please check the path to the file DTA.php below."
+msgstr ""
+"Die Datei DTA.php konnte nicht geladen werden. Bitte prüfen Sie den "
+"Verzeichnispfad weiter unten."
+
+#: direct_debit.module:863
+msgid "Reminder: Don't forget to update the Bank Identification Numbers at @date. Go to <a href=\"@dd_settings_url\">Administer > Settings > Direct Debit</a> to perform the update."
+msgstr ""
+"Erinnerung: Vergessen Sie nicht, die Bankleitzahlen am @date zu "
+"aktualisieren. Gehen Sie zu <a href=\"@dd_settings_url\">Verwalten > "
+"Einstellungen > Lastschriften</a>, um die Aktualisierung durchzuführen."
+
+#: direct_debit.module:865
+msgid "Warning: The Bank Identification Numbers are out-of-date since @date. Go to <a href=\"@dd_settings_url\">Administer > Settings > Direct Debit</a> to perform the update."
+msgstr "Achtung: Die Bankleitzahlen sind seit dem @date überholt. Gehen Sie zu <a href=\"@dd_settings_url\">Verwalten > Einstellungen > Lastschriften</a> um eine Aktualisierung durchzuführen."
+
+#: direct_debit.module:890;896;1106
+msgid "Create DTA file"
+msgstr "DTA-Datei erzeugen"
+
+#: direct_debit.module:907;2013
+msgid "Unable to create the DTA file. Please check the path to the file DTA.php in <a href=\"@dd_settings_url\">Administer > Settings > Direct Debit</a>."
+msgstr ""
+"Die DTA-Datei konnte nicht erzeugt werden. Bitte prüfen Sie den "
+"Verzeichnispfad zur Datei DTA.php in <a "
+"href=\"@dd_settings_url\">Verwalten > Einstellungen > Lastschriften</a>."
+
+#: direct_debit.module:913
+msgid "Creates a DTA File using all new contributions. The Contribution Status will be updated from \"pending\" to \"in progress\". This button is only enabled if new contributions available."
+msgstr ""
+"DTA-Datei mit allen neuen Lastschriften erzeugen. Der Status dieser "
+"Lastschriften wird von \"unbearbeitet\" auf \"in Arbeit\" gesetzt. "
+
+#: direct_debit.module:919
+msgid "DTA files created in the past are collected in the <a href=\"@link\">DTA files archive</a>."
+msgstr ""
+"Früher erzeugte DTA-Dateien sind im <a "
+"href=\"@link\">DTA-Dateiarchiv</a> verfügbar."
+
+#: direct_debit.module:925
+msgid "Update options"
+msgstr "Aktualisierungs-Einstellungen"
+
+#: direct_debit.module:936
+msgid "Set status to:"
+msgstr "Status setzen:"
+
+#: direct_debit.module:947;1112
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: direct_debit.module:956
+msgid "Contribution Overview"
+msgstr "Lübersicht"
+
+#: direct_debit.module:1006;1727
+msgid "Receipt"
+msgstr "Spendenbescheinigung"
+
+#: direct_debit.module:1051
+msgid "completed"
+msgstr "abgeschlossen"
+
+#: direct_debit.module:1052
+msgid "canceled"
+msgstr "abgebrochen"
+
+#: direct_debit.module:1053
+msgid "failed"
+msgstr "fehlgeschlagen"
+
+#: direct_debit.module:1057
+msgid "pending"
+msgstr "unbearbeitet"
+
+#: direct_debit.module:1058
+msgid "in progress"
+msgstr "in Arbeit"
+
+#: direct_debit.module:1125
+msgid "You have to select at least one contribution to perform an update action."
+msgstr ""
+"Wählen Sie mindestens eine Lastschrift aus, um eine "
+"Aktualisierungs-Aktion ausführen zu können."
+
+#: direct_debit.module:1132
+msgid "The status was updated successfully to <em>@status</em> for all (@count) selected contributions."
+msgstr ""
+"Der Status wurde auf <em>@status</em> gesetzt für alle (@count) "
+"ausgewählten Lastschriften."
+
+#: direct_debit.module:1136
+msgid "The selected contributions could not be set to <em>completed</em>. Please make sure that you have proceeded them correctly: they need to have the <em>in progress</em> state."
+msgstr ""
+"Der Status der ausgewählten Lastschriften konnte nicht auf "
+"<em>abgeschlossen</em> gesetzt werden. Bitte prüfen Sie, daß Sie sie "
+"richtig bearbeitet haben: Die Lastschriften müssen vorher den Status "
+"<em>in Arbeit</em> haben."
+
+#: direct_debit.module:1138
+msgid "The status was updated successfully to <em>completed</em> for @count of the selected contributions. @count_not selected contributions were not be set to <em>completed</em>. Please make sure that you have proceeded these contributions correctly: they need to have the <em>in progress</em> state."
+msgstr ""
+"Der Status wurde bei nur @count der ausgewählten Lastschriften auf "
+"<em>@status</em> gesetzt. @count_not der ausgewählten Lastschriften "
+"wurden nicht auf <em>completed</em> gesetzt. Bitte prüfen Sie, daß "
+"Sie sie richtig bearbeitet haben: Die Lastschriften müssen vorher den "
+"Status <em>in Arbeit</em> haben."
+
+#: direct_debit.module:1141
+msgid "No contribution has been updated."
+msgstr "Es wurden keine Lastschriften aktualisiert."
+
+#: direct_debit.module:1143
+msgid "The status was updated successfully to <em>@status</em> for @count of the selected contributions. @count_not selected contributions were not be set to <em>@status</em>. Please check their contribution update workflow."
+msgstr ""
+"Der Status wurde bei nur @count der ausgewählten Lastschriften auf "
+"<em>@status</em> gesetzt. @count_not der ausgewählten Lastschriften "
+"wurden nicht auf <em>@status</em> gesetzt. Bitte prüfen Sie deren "
+"Status."
+
+#: direct_debit.module:1187
+msgid "No transactions available."
+msgstr "Keine Lastschrift verfügbar."
+
+#: direct_debit.module:1214;1626
+msgid "Status"
+msgstr "Status"
+
+#: direct_debit.module:1267
+msgid "Filter items"
+msgstr "Einträge filtern"
+
+#: direct_debit.module:1279
+msgid "<em>and</em> where <strong>%a</strong> is <strong>%b</strong>"
+msgstr "<em>und</em> wo <strong>%a</strong> gleich <strong>%b</strong>"
+
+#: direct_debit.module:1282
+msgid "<strong>%a</strong> is <strong>%b</strong>"
+msgstr "<strong>%a</strong> gleich <strong>%b</strong>"
+
+#: direct_debit.module:1301;1369
+msgid "Refine"
+msgstr "Einschränken"
+
+#: direct_debit.module:1301;1368
+msgid "Filter"
+msgstr "Filter"
+
+#: direct_debit.module:1307;1381
+msgid "Undo"
+msgstr "Rückgängig"
+
+#: direct_debit.module:1312;1384
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: direct_debit.module:1333
+msgid "Show only items where"
+msgstr "Nur Einträge anzeigen mit"
+
+#: direct_debit.module:1340
+msgid "and"
+msgstr "und"
+
+#: direct_debit.module:1340
+msgid "where"
+msgstr "wobei"
+
+#: direct_debit.module:1346
+msgid "is"
+msgstr "ist"
+
+#: direct_debit.module:1546
+msgid "Could not open uploaded file."
+msgstr "Die hochgeladene Datei konnte nicht verarbeitet werden."
+
+#: direct_debit.module:1574
+msgid "Could not import Bank Identification Numbers because the uploaded file has an error in line @line."
+msgstr ""
+"Die Bankleitzahlen konnten nicht importiert werden, da die "
+"hochgeladene Datei einen Fehler in Zeile @line enthält."
+
+#: direct_debit.module:1584;1592
+msgid "An Error occurred while importing file data into the database. The bank identification numbers may be incomplete. You need to import the data again or contact the site administrator."
+msgstr ""
+"Ein Fehler trat während des Imports der Daten auf. Die Bankleitzahlen "
+"sind möglicherweise nicht vollständig. Laden Sie die Datei erneut "
+"hoch oder kontaktieren Sie den Site Administrator."
+
+#: direct_debit.module:1618
+msgid "ID"
+msgstr "ID"
+
+#: direct_debit.module:1619
+msgid "Received on"
+msgstr "Empfangen am"
+
+#: direct_debit.module:1620
+msgid "Account Holder"
+msgstr "Kontoinhaber"
+
+#: direct_debit.module:1621
+msgid "Amount"
+msgstr "Betrag"
+
+#: direct_debit.module:1622
+msgid "Currency"
+msgstr "Währung"
+
+#: direct_debit.module:1623
+msgid "BAN"
+msgstr "Kontonummer"
+
+#: direct_debit.module:1624
+msgid "BIN"
+msgstr "Bankleitzahl"
+
+#: direct_debit.module:1625
+msgid "Bank Name"
+msgstr "Bankname"
+
+#: direct_debit.module:1632
+msgid "Organization"
+msgstr "Organisation"
+
+#: direct_debit.module:1633
+msgid "First Name"
+msgstr "Vorname"
+
+#: direct_debit.module:1634
+msgid "Last Name"
+msgstr "Nachname"
+
+#: direct_debit.module:1636
+msgid "Post Code"
+msgstr "Postleitzahl"
+
+#: direct_debit.module:1638
+msgid "State / Province"
+msgstr "Bundesland"
+
+#: direct_debit.module:1639
+msgid "Country"
+msgstr "Land"
+
+#: direct_debit.module:1640
+msgid "IP address"
+msgstr "IP-Adresse"
+
+#: direct_debit.module:1641
+msgid "Email address"
+msgstr "E-Mail-Adresse"
+
+#: direct_debit.module:1642
+msgid "Contribution Type"
+msgstr "Spendenart"
+
+#: direct_debit.module:1643
+msgid "Contribution Page ID"
+msgstr "ID der Spendenseite"
+
+#: direct_debit.module:1644
+msgid "Description"
+msgstr "Beschreibung"
+
+#: direct_debit.module:1645
+msgid "Confirmed on"
+msgstr "Bestätigt am"
+
+#: direct_debit.module:1646
+msgid "Canceled on"
+msgstr "Abgebrochen am"
+
+#: direct_debit.module:1647
+msgid "Failed on"
+msgstr "Fehlgeschlagen am"
+
+#: direct_debit.module:1648
+msgid "Created DTA on"
+msgstr "DTA erzeugt am"
+
+#: direct_debit.module:1649;1650;1651;1652
+msgid "user"
+msgstr "Benutzer"
+
+#: direct_debit.module:1677;1801
+msgid "Could not find a contribution with transaction id @trxn_id."
+msgstr "Konnte keine Lastschrift mit Transaktions-ID @trxn_id finden."
+
+#: direct_debit.module:1726
+msgid "Billing"
+msgstr "Quittung"
+
+#: direct_debit.module:1750
+msgid "unknown user"
+msgstr "unbekannter Benutzer"
+
+#: direct_debit.module:1818;2374
+msgid "Name and Address of the issuer:"
+msgstr "Name und Adresse des Ausstellers:"
+
+#: direct_debit.module:1823;2379
+msgid "Name and Address of the contributor:"
+msgstr "Name und Adresse des Spenders:"
+
+#: direct_debit.module:1829;2385
+msgid "Numeric value of contribution:"
+msgstr "Betrag der Spende in Zahlen:"
+
+#: direct_debit.module:1833;2387
+msgid "Date of contribution:"
+msgstr "Datum der Spende:"
+
+#: direct_debit.module:1852;1879;2114
+msgid "Can't send file because of an internal error (Some data has already been send to the Web Browser). Please contact the site administrator."
+msgstr ""
+"Die Datei konnte wegen eines internen Fehlers nicht gesendet werden "
+"(es wurden Daten schon vorher an den Browser gesendet). Bitte "
+"kontaktieren Sie den Site Administrator."
+
+#: direct_debit.module:1908
+msgid "DTA File"
+msgstr "DTA-Datei"
+
+#: direct_debit.module:1913
+msgid "Date"
+msgstr "Datum"
+
+#: direct_debit.module:1917
+msgid "User"
+msgstr "Benutzer"
+
+#: direct_debit.module:1958
+msgid "Download the last created DTA file:"
+msgstr "Laden Sie die zuletzt erzeugte DTA-Datei:"
+
+#: direct_debit.module:1965
+msgid "No DTA file available."
+msgstr "Keine DTA-Datei verfügbar."
+
+#: direct_debit.module:1969
+msgid "DTA file archive"
+msgstr "DTA-Dateiarchiv"
+
+#: direct_debit.module:2036
+msgid "Error while setting the DTA sender data. Please check the Direct Debit configuration or contact the site administrator."
+msgstr ""
+"Fehler beim Einfügen der DTA-Absenderdaten. Bitte prüfen Sie die "
+"Konfiguration des Lastschrift-Moduls oder kontaktieren Sie den Site "
+"Administrator."
+
+#: direct_debit.module:2088
+msgid "Error with some invalid debit data. The DTA file could not be created. Please check the direct debit configuration or contact the site administrator."
+msgstr ""
+"Die DTA-Datei konnte nicht erzeugt werden, da einige Lastschriftdaten "
+"fehlerhaft sind. Bitte prüfen Sie die Konfiguration des "
+"Lastschrift-Moduls oder kontaktieren Sie den Site Administrator."
+
+#: direct_debit.module:2096
+msgid "Unknown Error occurred. The DTA file could not be created. Please check the direct debit configuration or contact the site administrator."
+msgstr ""
+"Ein unbekannter Fehler ist aufgetreten. Die DTA-Datei konnte nicht "
+"erzeugt werden. Bitte prüfen Sie die Konfiguration des "
+"Lastschrift-Moduls oder kontaktieren Sie den Site Administrator."
+
+#: direct_debit.module:2147
+msgid "Number of pending transactions."
+msgstr "Anzahl der unbearbeiteten Lastschriften."
+
+#: direct_debit.module:2176;2207;43;44
+msgid "Direct Debit Management"
+msgstr "Lastschriften-Verwaltung"
+
+#: direct_debit.module:2224
+msgid "Unknown update status."
+msgstr "Unbekannter Status."
+
+#: direct_debit.module:2298
+msgid "Germany"
+msgstr "Deutschland"
+
+#: direct_debit.module:2300
+msgid "Brandenburg"
+msgstr "Brandenburg"
+
+#: direct_debit.module:2301
+msgid "Berlin"
+msgstr "Berlin"
+
+#: direct_debit.module:2302
+msgid "Baden-Württemberg"
+msgstr "Baden-Württemberg"
+
+#: direct_debit.module:2303
+msgid "Bavaria"
+msgstr "Bayern"
+
+#: direct_debit.module:2304
+msgid "Bremen"
+msgstr "Bremen"
+
+#: direct_debit.module:2305
+msgid "Hesse"
+msgstr "Hessen"
+
+#: direct_debit.module:2306
+msgid "Hamburg"
+msgstr "Hamburg"
+
+#: direct_debit.module:2307
+msgid "Lower Saxony"
+msgstr "Niedersachsen"
+
+#: direct_debit.module:2308
+msgid "Mecklenburg-Western Pomerania"
+msgstr "Mecklenburg-Vorpommern"
+
+#: direct_debit.module:2309
+msgid "North Rhine-Westphalia"
+msgstr "Nordrhein-Westfalen"
+
+#: direct_debit.module:2310
+msgid "Rhineland-Palatinate"
+msgstr "Rheinland-Pfalz"
+
+#: direct_debit.module:2311
+msgid "Schleswig-Holstein"
+msgstr "Schleswig-Holstein"
+
+#: direct_debit.module:2312
+msgid "Saarland"
+msgstr "Saarland"
+
+#: direct_debit.module:2313
+msgid "Saxony"
+msgstr "Sachsen"
+
+#: direct_debit.module:2314
+msgid "Saxony-Anhalt"
+msgstr "Sachsen-Anhalt"
+
+#: direct_debit.module:2315
+msgid "Thuringia"
+msgstr "Thüringen"
+
+#: direct_debit.module:2347
+msgid "[Organization name]"
+msgstr "[Organisationsname]"
+
+#: direct_debit.module:2348
+msgid "[First name]"
+msgstr "[Vorname]"
+
+#: direct_debit.module:2349
+msgid "[Last name]"
+msgstr "[Nachname]"
+
+#: direct_debit.module:2350
+msgid "[Street Address]"
+msgstr "[Straße]"
+
+#: direct_debit.module:2351
+msgid "[Postal Code]"
+msgstr "[Postleitzahl]"
+
+#: direct_debit.module:2352
+msgid "[City]"
+msgstr "[Ort]"
+
+#: direct_debit.module:2353
+msgid "[Amount]"
+msgstr "[Summe]"
+
+#: direct_debit.module:2360
+msgid "Could not send mail for contribution with Transaction ID %trxn_id."
+msgstr "Für Lastschrift Lastschrift mit Transaktions-ID %trxn_id konnte keine E-Mail versandt werden."
+
+#: direct_debit.module:2365
+msgid "Could not send mail for contribution with Transaction ID %trxn_id, because the email is missing."
+msgstr "Für Lastschrift Lastschrift mit Transaktions-ID %trxn_id konnte aufgrund fehlender E-Mail-Adresse keine E-Mail versandt werden."
+
+#: direct_debit.module:642;650;727;733;736;742;748;754;788;846;1583;1591
+msgid "direct debit"
+msgstr "Lastschrift"
+
+#: direct_debit.module:642
+msgid "Error code: 'unknown did'."
+msgstr "Fehlercode: 'Unbekannte did'."
+
+#: direct_debit.module:650
+msgid "Error code: 'failed to create trxn_id'."
+msgstr "Fehlercode: 'Erzeugen der trxn_id fehlgeschlagen'."
+
+#: direct_debit.module:727
+msgid "Error code: 'field required' for field: @field."
+msgstr "Fehlercode: 'Feld erforderlich' für Feld: @field."
+
+#: direct_debit.module:733
+msgid "Error code: 'field required' for field: email."
+msgstr "Fehlercode: 'Feld erforderlich' für Feld: E-Mail"
+
+#: direct_debit.module:736
+msgid "Error code: 'invalid data' for field: email."
+msgstr "Fehlercode: 'Ungültige Daten' für Feld: email."
+
+#: direct_debit.module:742
+msgid "Error code: 'invalid data' for field: bank_account_number."
+msgstr "Fehlercode: 'Ungültige Daten' für Feld: bank_account_number."
+
+#: direct_debit.module:748
+msgid "Error code: 'invalid data' for field: bank_identification_number."
+msgstr "Fehlercode: 'Ungültige Daten' für Feld: bank_identification_number."
+
+#: direct_debit.module:754
+msgid "Error code: 'invalid data' for field bank_name."
+msgstr "Fehlercode: 'Ungültige Daten' für Feld: bank_name."
+
+#: direct_debit.module:788
+msgid "Error code: 'data exists'."
+msgstr "Fehlercode: 'Daten vorhanden'."
+
+#: direct_debit.module:846
+msgid "Error code: 'failed to insert data'."
+msgstr "Fehlercode: 'Einfügen der Daten fehlgeschlagen'."
+
+#: direct_debit.module:1583
+msgid "An Error occurred while deleting data from the table <em>direct_debit_bank_identification_numbers</em>. The bank identification numbers may be incomplete."
+msgstr ""
+"Ein Fehler trat auf während des Löschens in der Tabelle "
+"<em>direct_debit_bank_identification_numbers</em>. Die Bankleitzahlen "
+"könnten unvollständig sein."
+
+#: direct_debit.module:1591
+msgid "An Error occurred while importing file @file data into the database. The bank identification numbers may be incomplete."
+msgstr ""
+"Ein Fehler trat auf während des Imports der Datei @file in die "
+"Datenbank. Die Bankleitzahlen könnten unvollständig sein."
+
+#: direct_debit.module:2402
+msgid "mail"
+msgstr "E-Mail"
+
+#: direct_debit.module:2402
+msgid "Error sending e-mail (from %from to %to)."
+msgstr "Fehler beim Senden der E-Mail (von %from an %to)."
+
+#: direct_debit.module:2204
+msgid "There is 1 pending contribution."
+msgid_plural "There are @count pending contributions."
+msgstr[0] "Es gibt 1 unbearbeitete Lastschrift."
+msgstr[1] "Es gibt @count unbearbeitete Lastschriften."
+
+#: direct_debit.module:30
+msgid "administer direct debit"
+msgstr "Lastschriften verwalten"
+
+#: direct_debit.module:30
+msgid "access direct debit"
+msgstr "Lastschriften benutzen"
+
+#: direct_debit.module:50;57;58;65
+msgid "DTA Files Archiv"
+msgstr "DTA-Dateiarchiv"
+
+#: direct_debit.module:51;66
+msgid "Direct Debit Management - DTA Files Archiv"
+msgstr "Lastschriften-Verwaltung - DTA-Dateiarchiv"
+
+#: direct_debit.module:73
+msgid "Direct Debit Details"
+msgstr "Lastschriftendetails"
+
+#: direct_debit.module:80
+msgid "Direct Debit Receipt"
+msgstr "Lastschriftenquittung"
+
+#: direct_debit.module:87
+msgid "Direct Debit Mail Preview"
+msgstr "Lastschriften-Bestätigung E-Mail-Vorschau"
+
+#: direct_debit.module:95
+msgid "Direct Debit"
+msgstr "Lastschriften"
+
+#: direct_debit.module:96
+msgid "Configure Direct Debit"
+msgstr "Lastschriften verwalten"
+
+#: direct_debit.module:0
+msgid "direct_debit"
+msgstr "direct_debit"
+
+#: direct_debit.install:15
+msgid "Primary Key: Unique ID for direct debit."
+msgstr "Primärer Schlüssel: Eindeutige ID für Lastschriften"
+
+#: direct_debit.install:22
+msgid "Key: Unique ID for transactions with the format: dd_xxxx_did. This Id is used as transaction id for civicrm"
+msgstr ""
+"Schlüssel: Eindeutige ID für Transaktionen im Format: dd_xxxx_did. "
+"Diese ID wird als ID für Transaktionen in CiviCRM genutzt."
+
+#: direct_debit.install:29
+msgid "First name."
+msgstr "Vorname."
+
+#: direct_debit.install:36
+msgid "Last name."
+msgstr "Nachname."
+
+#: direct_debit.install:43
+msgid "Organization name."
+msgstr "Organisationsname."
+
+#: direct_debit.install:50
+msgid "Account Holder."
+msgstr "Kontoinhaber."
+
+#: direct_debit.install:57
+msgid "Bank Account Number."
+msgstr "Kontonummer."
+
+#: direct_debit.install:64;295
+msgid "Bank Identification Number."
+msgstr "Bankleitzahl."
+
+#: direct_debit.install:71;302
+msgid "Bank Name."
+msgstr "Name der Bank."
+
+#: direct_debit.install:78
+msgid "Address: Street."
+msgstr "Adresse: Straße."
+
+#: direct_debit.install:85
+msgid "Address: Postal Code."
+msgstr "Adresse: Postleitzahl"
+
+#: direct_debit.install:92
+msgid "Address: City."
+msgstr "Adresse: Stadt."
+
+#: direct_debit.install:99
+msgid "Address: State/Province."
+msgstr "Adresse: Bundesland."
+
+#: direct_debit.install:106
+msgid "Address: Country."
+msgstr "Adresse: Land."
+
+#: direct_debit.install:113
+msgid "Email address."
+msgstr "E-Mail-Adresse."
+
+#: direct_debit.install:120
+msgid "Payment action."
+msgstr "Zahlaktion."
+
+#: direct_debit.install:127
+msgid "Contribution page identifier."
+msgstr "ID der Spendenseite."
+
+#: direct_debit.install:134
+msgid "Contribution description."
+msgstr "Spendenbeschreibung."
+
+#: direct_debit.install:141
+msgid "Contribution type."
+msgstr "Spendentyp."
+
+#: direct_debit.install:150
+msgid "Contribution amount."
+msgstr "Spendenbetrag."
+
+#: direct_debit.install:157
+msgid "Currency Identifier."
+msgstr "ID der Währung."
+
+#: direct_debit.install:164
+msgid "Invoice Identifier."
+msgstr "ID der Rechnung."
+
+#: direct_debit.install:171
+msgid "Contributors IP address."
+msgstr "IP-Adresse des Spenders."
+
+#: direct_debit.install:178
+msgid "Identifier of receipt, received from contribution form."
+msgstr "ID der Quittung (vom Spendenformular erhalten)."
+
+#: direct_debit.install:185
+msgid "Hash over the data received by direct_debit_do_payment."
+msgstr "Hash der von direct_debit_do_payment empfangenen Daten."
+
+#: direct_debit.install:191
+msgid "Status ID of transaction."
+msgstr "ID des Transaktionsstatus."
+
+#: direct_debit.install:197
+msgid "Billing type 0 not wanted, 1 wanted"
+msgstr "Rechnungstyp 0 nicht gewünscht, 1 gewünscht"
+
+#: direct_debit.install:204
+msgid "The Unix timestamp: pending."
+msgstr "Unix Timestamp: unbearbeitet."
+
+#: direct_debit.install:211
+msgid "The Unix timestamp: canceled."
+msgstr "Unix Timestamp: abgebrochen."
+
+#: direct_debit.install:218
+msgid "The Unix timestamp: completed."
+msgstr "Unix Timestamp: abgeschlossen."
+
+#: direct_debit.install:225
+msgid "The Unix timestamp: in progress."
+msgstr "Unix Timestamp: in Arbeit."
+
+#: direct_debit.install:232
+msgid "The Unix timestamp: failed."
+msgstr "Unix Timestamp: fehlgeschlagen."
+
+#: direct_debit.install:239
+msgid "User's {users}.uid - who confirmed the payment."
+msgstr "{users}.uid des Benutzers, der die Zahlung bestätigt hat."
+
+#: direct_debit.install:246
+msgid "User's {users}.uid - who canceled the payment."
+msgstr "{users}.uid des Benutzers, der die Zahlung abgebrochen hat."
+
+#: direct_debit.install:253
+msgid "User's {users}.uid - who set failed to the payment."
+msgstr ""
+"{users}.uid des Benutzers, der die Zahlung als fehlgeschlagen markiert "
+"hat."
+
+#: direct_debit.install:260
+msgid "User's {users}.uid - who set payment to in progress."
+msgstr "{users}.uid des Benutzers, der die Zahlung als in Arbeit markiert hat."
+
+#: direct_debit.install:267
+msgid "Identifier for each DTA file - will be the first dta_id of the dataset."
+msgstr "ID jeder DTA-Datei - ist die erste dta_id des Datensatzes."
+
+#: direct_debit.install:274
+msgid "Counts dta files created on the same day."
+msgstr "Zählt am selben Tag erzeugte DTA-Dateien."
+
+#: direct_debit.install:288
+msgid "Primary Key: Unique ID."
+msgstr "Primärer Schlüssel: Eindeutige ID."
+
+#: direct_debit.info:0
+msgid "Direct Debit Offline Gateway"
+msgstr "Offline-Gateway für Elektronische Lastschriften"
+
+#: direct_debit.info:0
+msgid "Provides gateway functionality for the CiviCRM Direct Debit payment processor.0x20See http://fuerstnet.de/direct_debit for more information."
+msgstr ""
+
