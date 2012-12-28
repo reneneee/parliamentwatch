@@ -37,7 +37,7 @@ function german_councils_list($form, &$form_state) {
     }
 //    echo $first_state;
 //    exit;
-    $option_group_id = db_query("SELECT id FROM civicrm_option_group WHERE title = 'German Council'")->fetchField();
+    $option_group_id = db_query("SELECT id FROM civicrm_option_group WHERE title = 'German Councils'")->fetchField();
     $councils = db_select("civicrm_option_value", 'c')
             ->fields('c', array('id', 'name', 'label'))
             ->condition('option_group_id', $option_group_id)
@@ -249,6 +249,7 @@ function manage_councils_form_submit($form, &$form_state) {
     $councils = $form_state['values']['names_fieldset']['name'];
     $german_state = $form_state['values']['names_fieldset']['german_states'];
     db_set_active(CIVICRM_DB);
+    
     $concil_id = '';
     $state_id = '';
     $concil_id = arg(3);
@@ -258,10 +259,12 @@ function manage_councils_form_submit($form, &$form_state) {
     } else {
         $action = "db_insert";
     }
-    $option_group_id = db_query("SELECT id FROM civicrm_option_group WHERE title = 'German Council'")->fetchField();
+    $option_group_id = db_query("SELECT id FROM civicrm_option_group WHERE title = 'German Councils'")->fetchField();
+    
     $weight = ''; //TODO will fetch from db +1 
     if ($action == "db_insert") {
         foreach ($councils as $council) {
+//            echo 'sdf'; exit;
             $query = db_insert('civicrm_option_value')->fields(array('option_group_id', 'label', 'value', 'name', 'grouping', 'filter', 'is_default', 'weight', 'description', 'is_optgroup',
                 'is_reserved', 'is_active', 'component_id', 'domain_id', 'visibility_id'));
 
